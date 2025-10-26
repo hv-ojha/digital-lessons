@@ -92,6 +92,23 @@ lib/
 5. Code is validated for safety
 6. Lesson is stored in database and rendered
 
+## Performance Optimizations
+
+### Optimized AI Prompts
+
+The system uses highly optimized prompts that reduce token consumption by ~65%:
+- System prompt: ~1,200 tokens (was ~3,500)
+- User prompt: ~100 tokens (was ~400)
+- **Result:** Significantly lower API costs and faster responses
+
+### Token Usage Per Lesson
+
+Approximate token consumption:
+- **Title generation**: ~100 tokens
+- **Lesson code generation**: ~1,300-1,500 tokens (first attempt)
+- **Retries** (if needed): ~1,400-1,600 tokens each
+- **Total average**: ~2,000-3,000 tokens per lesson
+
 ## Feature Flags
 
 ### Image Generation

@@ -65,9 +65,7 @@ export default function Home() {
             </h3>
           </div>
         ) : (
-          <div className="max-w-6xl mx-auto">
-            <LessonTable initialLessons={lessons} />
-          </div>
+          <LessonTable initialLessons={lessons} />
         )}
 
         {/* Footer */}

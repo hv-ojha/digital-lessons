@@ -5,6 +5,7 @@ import { validateTypeScriptCode } from './validation';
 import { getSystemPrompt, getUserPrompt } from './prompts';
 import { generateImage, extractImageRequirements, ImageGenerationRequest } from './image-generator';
 import { AI_CONFIG } from './config';
+import { getCachedContent, buildConfigWithCache } from './cache-manager';
 
 // Initialize Google Gemini client
 const apiKey = process.env.GEMINI_API_KEY;
@@ -280,13 +281,14 @@ Generate the CORRECTED code now:`;
       fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\n${errorContext}`;
     }
 
+    // Cache the system prompt to save ~90% on input tokens (especially helpful for retries)
+    console.log(`\n💾 Checking prompt cache...`);
+    const cacheId = await getCachedContent(genAI, systemPrompt, modelName);
+
     const response = await genAI.models.generateContent({
       model: modelName,
       contents: fullPrompt,
-      config: {
-        temperature, // Lower temperature for more consistent code generation
-        maxOutputTokens: maxTokens, // Increased for detailed/lengthy lessons
-      },
+      config: buildConfigWithCache(cacheId, temperature, maxTokens),
     });
 
     let code = response.text?.trim() || '';

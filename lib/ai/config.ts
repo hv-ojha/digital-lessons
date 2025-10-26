@@ -52,6 +52,7 @@ export const AI_CONFIG = {
   // Feature flags
   features: {
     imageGeneration: process.env.ENABLE_IMAGE_GENERATION === 'true', // Default: false (disabled)
+    promptCaching: process.env.ENABLE_PROMPT_CACHING !== 'false', // Default: true (enabled), saves ~90% on input tokens
     svgFallback: true,
     autoRetry: true,
   },
