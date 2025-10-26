@@ -1,4 +1,3 @@
-import { traceable } from 'langsmith/traceable';
 import { compileTypeScriptCode } from './typescript-compiler';
 
 /**
@@ -25,8 +24,7 @@ export interface ValidationResult {
  * - Error boundaries
  * - User testing
  */
-export const validateTypeScriptCode = traceable(
-  function validateTypeScriptCode(code: string): ValidationResult {
+export function validateTypeScriptCode(code: string): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -213,83 +211,14 @@ export const validateTypeScriptCode = traceable(
     errors,
     warnings,
   };
-},
-{
-  name: 'validate_typescript_code',
-  run_type: 'tool',
-  metadata: (inputs: any, output: any) => {
-    const code = inputs.code || '';
-    const result = output as ValidationResult;
-    const isValid = result?.isValid || false;
-    const errors = result?.errors || [];
-    const warnings = result?.warnings || [];
-
-    // Categorize errors
-    const errorCategories = {
-      security: errors.filter(e =>
-        e.includes('eval') ||
-        e.includes('dangerouslySetInnerHTML') ||
-        e.includes('script')
-      ).length,
-      syntax: errors.filter(e =>
-        e.includes('Unbalanced') ||
-        e.includes('syntax')
-      ).length,
-      validation: errors.filter(e =>
-        e.includes('validation') ||
-        e.includes('input field')
-      ).length,
-      typescript: errors.filter(e =>
-        e.includes('Line') ||
-        e.includes('Type')
-      ).length,
-      imports: errors.filter(e =>
-        e.includes('import') ||
-        e.includes('module')
-      ).length,
-    };
-
-    return {
-      code_length: code.length,
-      code_lines: code.split('\n').length,
-      is_valid: isValid,
-      error_count: errors.length,
-      warning_count: warnings.length,
-      has_compilation_check: code.length > 0,
-      ran_pattern_validation: true,
-      ran_typescript_compilation: errors.length === 0 || errors.some(e => e.includes('Line')),
-      // Error categories
-      security_errors: errorCategories.security,
-      syntax_errors: errorCategories.syntax,
-      validation_errors: errorCategories.validation,
-      typescript_errors: errorCategories.typescript,
-      import_errors: errorCategories.imports,
-      // First few errors for quick debugging
-      first_error: errors[0] || null,
-      error_preview: errors.slice(0, 3),
-    };
-  },
-  tags: (inputs: any, output: any) => {
-    const result = output as ValidationResult;
-    const isValid = result?.isValid || false;
-
-    const tags = [
-      process.env.NODE_ENV || 'development',
-      'validation',
-      'code-quality',
-      isValid ? 'passed' : 'failed'
-    ];
-
-    return tags;
-  }
-});
+}
 
 /**
  * Sanitize generated code before execution
  */
 export function sanitizeCode(code: string): string {
   // Remove any potential script injections
-  let sanitized = code.replace(/<script[^>]*>.*?<\/script>/gis, '');
+  let sanitized = code.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
 
   // Remove any import statements that aren't React
   sanitized = sanitized.replace(/import\s+.*?\s+from\s+['"](?!react['"]).*?['"];?\n/g, '');
