@@ -1,6 +1,30 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# ========================================
+# 🔒 SECURITY: Environment Variables & API Keys
+# ========================================
+# NEVER commit these files - they contain sensitive API keys
+.env
+.env.local
+.env*.local
+.env.development
+.env.test
+.env.production
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Additional security files
+*.key
+*.pem
+*.cert
+*.p12
+secrets.*
+credentials.*
+
+# ========================================
+# Dependencies
+# ========================================
 /node_modules
 /.pnp
 .pnp.*
@@ -10,33 +34,77 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# ========================================
+# Testing
+# ========================================
 /coverage
+*.lcov
 
-# next.js
+# ========================================
+# Next.js
+# ========================================
 /.next/
 /out/
+.next
 
-# production
+# ========================================
+# Production
+# ========================================
 /build
+/dist
 
-# misc
-.DS_Store
-*.pem
-
-# debug
+# ========================================
+# Logs
+# ========================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
-# env files (can opt-in for committing if needed)
-.env*.local
-.env
+# ========================================
+# Operating System
+# ========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Desktop.ini
 
-# vercel
+# ========================================
+# IDEs & Editors
+# ========================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ========================================
+# Vercel
+# ========================================
 .vercel
 
-# typescript
+# ========================================
+# TypeScript
+# ========================================
 *.tsbuildinfo
 next-env.d.ts
+
+# ========================================
+# Backup & Temporary Files
+# ========================================
+*.backup
+*.bak
+*.tmp
+*.temp
+*~

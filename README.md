@@ -1,109 +1,139 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Digital Lessons - AI-Powered Educational Platform
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
-
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+An interactive educational platform that generates engaging lessons using AI. Built with Next.js, TypeScript, Supabase, and Google Gemini.
 
 ## Features
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+- AI-generated interactive lessons from simple text prompts
+- Real-time lesson generation with status updates
+- Safe code execution for educational content
+- Support for quizzes, explanations, and visual content
+- Image generation for visual lessons
 
-## Demo
+## Tech Stack
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+- **Frontend**: Next.js 14, React 19, TypeScript, Tailwind CSS
+- **Database**: Supabase (PostgreSQL)
+- **AI**: Google Gemini 2.5 Flash (text & image generation)
+- **Monitoring**: LangSmith tracing
 
-## Deploy to Vercel
+## Quick Start
 
-Vercel deployment will guide you through creating a Supabase account and project.
-
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
-
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
-
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
-
-## Clone and run locally
-
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
-
-2. Create a Next.js app using the Supabase Starter template npx command
-
+1. **Install dependencies**
    ```bash
-   npx create-next-app --example with-supabase with-supabase-app
+   bun install
    ```
 
+2. **Setup environment variables**
+
+   Create `.env.local`:
    ```bash
-   yarn create next-app --example with-supabase with-supabase-app
+   # Supabase
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-key
+
+   # AI Model
+   AI_PROVIDER=gemini
+   AI_MODEL_NAME=gemini-2.5-flash
+   GEMINI_API_KEY=your-gemini-api-key
+
+   # Feature Flags
+   ENABLE_IMAGE_GENERATION=false  # Set to true to enable AI image generation
+
+   # LangSmith (optional)
+   LANGCHAIN_TRACING_V2=true
+   LANGSMITH_API_KEY=your-langsmith-key
+   LANGSMITH_PROJECT=digital-lessons
    ```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
+3. **Setup Supabase database**
+
+   Run the SQL migration in Supabase dashboard:
+   ```sql
+   -- Located in: supabase/migrations/001_create_lessons_table.sql
    ```
 
-3. Use `cd` to change into the app's directory
-
+4. **Run development server**
    ```bash
-   cd with-supabase-app
+   bun dev
    ```
 
-4. Rename `.env.example` to `.env.local` and update the following:
+   Open [http://localhost:3000](http://localhost:3000)
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+## Project Structure
 
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+```
+app/
+├── page.tsx                  # Home page
+├── lessons/[id]/page.tsx     # Lesson view
+└── api/lessons/              # API routes
 
-5. You can now run the Next.js local development server:
+components/
+├── lesson-form.tsx           # Lesson creation form
+├── lesson-table.tsx          # Lessons list
+└── lesson-renderer.tsx       # Safe code renderer
 
-   ```bash
-   npm run dev
-   ```
+lib/
+├── ai/                       # AI generation logic
+│   ├── generator.ts          # Lesson generation
+│   ├── image-generator.ts    # Image generation
+│   ├── prompts.ts            # AI prompts
+│   └── models/               # Model providers
+├── db/lessons.ts             # Database operations
+└── supabase/                 # Supabase clients
+```
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+## How It Works
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+1. User enters lesson outline (e.g., "A 10 question quiz on planets")
+2. AI generates a catchy title
+3. AI creates TypeScript/React code for the lesson
+4. (Optional) AI generates images for visual content (if enabled)
+5. Code is validated for safety
+6. Lesson is stored in database and rendered
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+## Feature Flags
 
-## Feedback and issues
+### Image Generation
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+By default, AI image generation is **disabled** to save time and API costs.
 
-## More Supabase examples
+**To enable:**
+```bash
+# In .env.local
+ENABLE_IMAGE_GENERATION=true
+```
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+**Benefits of disabling (default):**
+- ⚡ Faster lesson generation
+- 💰 Lower API costs
+- 🚀 Simpler lessons without images
+
+**When to enable:**
+- Want visual diagrams in lessons
+- Teaching visual subjects (geography, biology, etc.)
+- Need illustrations for kids
+
+## API Keys
+
+Get your API keys:
+- **Gemini**: https://aistudio.google.com/app/apikey
+- **Supabase**: https://supabase.com/dashboard
+- **LangSmith** (optional): https://smith.langchain.com
+
+## Deployment
+
+Deploy to Vercel:
+
+1. Push code to GitHub
+2. Import repository in Vercel
+3. Add environment variables
+4. Deploy
+
+## License
+
+Created as part of Astral assignment.
+
+---
+
+Made for curious learners 📚
