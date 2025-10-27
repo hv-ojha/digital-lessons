@@ -12,13 +12,22 @@ const apiKey = process.env.GEMINI_API_KEY;
 
 // Debug: Check if API key is loaded
 if (!apiKey) {
-  console.error('❌ GEMINI_API_KEY is not set in environment variables');
-  throw new Error('GEMINI_API_KEY is required');
+  const errorMsg = '❌ CRITICAL: GEMINI_API_KEY is not set in environment variables. Please configure it in your deployment settings.';
+  console.error(errorMsg);
+  console.error('Environment variables available:', Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('API')));
+  throw new Error('GEMINI_API_KEY is required. Please set it in your environment variables.');
 } else {
-  console.log('✅ GEMINI_API_KEY is loaded:', apiKey.substring(0, 20) + '...');
+  console.log('✅ GEMINI_API_KEY is loaded:', apiKey.substring(0, 20) + '... (length: ' + apiKey.length + ')');
 }
 
-const genAI = new GoogleGenAI({ apiKey: apiKey });
+let genAI: GoogleGenAI;
+try {
+  genAI = new GoogleGenAI({ apiKey: apiKey });
+  console.log('✅ GoogleGenAI client initialized successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize GoogleGenAI client:', error);
+  throw new Error(`Failed to initialize GoogleGenAI: ${error instanceof Error ? error.message : 'Unknown error'}`);
+}
 
 /**
  * Estimate token count (rough approximation: 1 token ≈ 4 characters)
@@ -152,14 +161,25 @@ Create a short, fun title for this lesson outline: "${outline}"
 
 Return ONLY the title, nothing else.`;
 
-    const response = await genAI.models.generateContent({
-      model: modelName,
-      contents: prompt,
-      config: {
-        temperature,
-        maxOutputTokens: maxTokens,
-      },
-    });
+    let response;
+    try {
+      response = await genAI.models.generateContent({
+        model: modelName,
+        contents: prompt,
+        config: {
+          temperature,
+          maxOutputTokens: maxTokens,
+        },
+      });
+    } catch (error) {
+      console.error('❌ Gemini API call failed for title generation:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        modelName,
+        promptLength: prompt.length,
+      });
+      throw new Error(`Gemini API call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
 
     const title = response.text?.trim() || 'Untitled Lesson';
 
@@ -285,11 +305,39 @@ Generate the CORRECTED code now:`;
     console.log(`\n💾 Checking prompt cache...`);
     const cacheId = await getCachedContent(genAI, systemPrompt, modelName);
 
-    const response = await genAI.models.generateContent({
-      model: modelName,
-      contents: fullPrompt,
-      config: buildConfigWithCache(cacheId, temperature, maxTokens),
-    });
+    let response;
+    try {
+      console.log(`🔄 Calling Gemini API for lesson code generation...`);
+      console.log(`   Model: ${modelName}`);
+      console.log(`   Prompt length: ${fullPrompt.length} chars (~${Math.round(fullPrompt.length / 4)} tokens)`);
+      console.log(`   Temperature: ${temperature}`);
+      console.log(`   Max tokens: ${maxTokens}`);
+
+      response = await genAI.models.generateContent({
+        model: modelName,
+        contents: fullPrompt,
+        config: buildConfigWithCache(cacheId, temperature, maxTokens),
+      });
+
+      console.log(`✅ Gemini API call successful`);
+    } catch (error) {
+      console.error(`❌ Gemini API call failed for lesson code generation (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        modelName,
+        promptLength: fullPrompt.length,
+        retryCount,
+      });
+
+      // If it's a network/API error and we have retries left, throw to trigger retry
+      if (retryCount < MAX_RETRIES) {
+        throw new Error(`Gemini API call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } else {
+        // Out of retries, throw final error
+        throw new Error(`Gemini API call failed after ${MAX_RETRIES} retries: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
 
     let code = response.text?.trim() || '';
 

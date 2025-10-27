@@ -74,29 +74,48 @@ export async function POST(request: NextRequest) {
  */
 async function generateAndUpdateLesson(lessonId: string, outline: string) {
   try {
-    console.log(`Starting generation for lesson ${lessonId}`);
+    console.log(`[LESSON ${lessonId}] Starting generation...`);
+    console.log(`[LESSON ${lessonId}] Outline: "${outline}"`);
+
+    // Check environment variables
+    console.log(`[LESSON ${lessonId}] Environment check:`);
+    console.log(`  - GEMINI_API_KEY: ${process.env.GEMINI_API_KEY ? 'SET (length: ' + process.env.GEMINI_API_KEY.length + ')' : 'NOT SET'}`);
+    console.log(`  - AI_PROVIDER: ${process.env.AI_PROVIDER || 'not set (will use default)'}`);
+    console.log(`  - AI_MODEL_NAME: ${process.env.AI_MODEL_NAME || 'not set (will use default)'}`);
+    console.log(`  - ENABLE_IMAGE_GENERATION: ${process.env.ENABLE_IMAGE_GENERATION || 'not set (default: false)'}`);
+    console.log(`  - NODE_ENV: ${process.env.NODE_ENV}`);
 
     // Generate the lesson using AI
+    console.log(`[LESSON ${lessonId}] Calling generateLesson()...`);
     const result = await generateLesson(outline);
+    console.log(`[LESSON ${lessonId}] Generation result:`, {
+      success: result.success,
+      hasContent: !!result.content,
+      contentLength: result.content?.length || 0,
+      error: result.error,
+    });
 
     if (result.success && result.content) {
       // Update lesson with generated content
+      console.log(`[LESSON ${lessonId}] Updating database with generated content...`);
       await updateLessonStatus(lessonId, 'completed', result.content);
-      console.log(`Successfully generated lesson ${lessonId}`);
+      console.log(`[LESSON ${lessonId}] ✅ Successfully generated and saved`);
     } else {
       // Update lesson with error
-      await updateLessonStatus(
-        lessonId,
-        'failed',
-        undefined,
-        result.error || 'Generation failed'
-      );
-      console.error(`Failed to generate lesson ${lessonId}:`, result.error);
+      const errorMessage = result.error || 'Generation failed';
+      console.error(`[LESSON ${lessonId}] ❌ Generation failed: ${errorMessage}`);
+      await updateLessonStatus(lessonId, 'failed', undefined, errorMessage);
     }
   } catch (error) {
     // Update lesson with error
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    console.error(`[LESSON ${lessonId}] ❌ EXCEPTION in generateAndUpdateLesson:`);
+    console.error(`  Message: ${errorMessage}`);
+    console.error(`  Stack: ${errorStack}`);
+    console.error(`  Full error:`, error);
+
     await updateLessonStatus(lessonId, 'failed', undefined, errorMessage);
-    console.error(`Error in generateAndUpdateLesson for ${lessonId}:`, error);
   }
 }
