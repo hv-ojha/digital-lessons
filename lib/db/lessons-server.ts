@@ -89,3 +89,27 @@ export async function updateLessonStatus(
     throw new Error(`Failed to update lesson: ${error.message}`);
   }
 }
+
+/**
+ * Server-side: Update lesson with generated content (title + code)
+ */
+export async function updateLessonWithContent(
+  id: string,
+  title: string,
+  content: string
+): Promise<void> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('lessons')
+    .update({
+      title,
+      content,
+      status: 'completed' as LessonStatus,
+    })
+    .eq('id', id);
+
+  if (error) {
+    throw new Error(`Failed to update lesson with content: ${error.message}`);
+  }
+}

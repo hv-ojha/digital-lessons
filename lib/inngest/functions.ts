@@ -13,7 +13,7 @@
 
 import { inngest } from './client';
 import { generateLesson } from '@/lib/ai/generator';
-import { updateLessonStatus } from '@/lib/db/lessons-server';
+import { updateLessonStatus, updateLessonWithContent } from '@/lib/db/lessons-server';
 
 /**
  * Background function to generate lesson content
@@ -39,10 +39,19 @@ export const generateLessonFunction = inngest.createFunction(
     console.log(`\n🎯 [INNGEST] Starting lesson generation for ${lessonId}`);
     console.log(`📋 [INNGEST] Outline: "${outline}"`);
 
+    // Check if LangSmith is enabled
+    const langsmithEnabled = process.env.LANGCHAIN_TRACING_V2 === 'true';
+    console.log(`🔍 [INNGEST] LangSmith tracing: ${langsmithEnabled ? '✅ ENABLED' : '⚠️ DISABLED'}`);
+    if (langsmithEnabled) {
+      console.log(`   Project: ${process.env.LANGSMITH_PROJECT || 'default'}`);
+      console.log(`   All AI calls will be traced in LangSmith dashboard`);
+    }
+
     // Step 1: Generate lesson content using AI
     // LangSmith will trace all AI calls here!
     const result = await step.run('generate-ai-content', async () => {
       console.log(`🤖 [INNGEST] Calling AI to generate lesson...`);
+      console.log(`   This will create a trace tree in LangSmith:`);
 
       try {
         const generationResult = await generateLesson(outline);
@@ -61,14 +70,17 @@ export const generateLessonFunction = inngest.createFunction(
       }
     });
 
-    // Step 2: Update database with result
+    // Step 2: Update database with result (title + content)
     await step.run('update-database', async () => {
       console.log(`💾 [INNGEST] Updating database for lesson ${lessonId}...`);
 
       try {
-        if (result.success && result.content) {
-          await updateLessonStatus(lessonId, 'completed', result.content);
+        if (result.success && result.content && result.title) {
+          // Update both title and content in database
+          await updateLessonWithContent(lessonId, result.title, result.content);
           console.log(`✅ [INNGEST] Database updated successfully`);
+          console.log(`   Title: "${result.title}"`);
+          console.log(`   Content length: ${result.content.length} chars`);
         } else {
           const errorMessage = result.error || 'Generation failed';
           await updateLessonStatus(lessonId, 'failed', undefined, errorMessage);
