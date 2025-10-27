@@ -33,16 +33,18 @@ export async function POST(
     // Update status back to generating
     await updateLessonStatus(id, 'generating');
 
-    // Start async generation (don't await - let it run in background)
-    generateAndUpdateLesson(id, lesson.outline).catch(error => {
-      console.error('Background generation error:', error);
-    });
+    // IMPORTANT: Must await generation to prevent serverless function from terminating
+    // before the AI call completes. Serverless functions can be killed after sending
+    // the response, so fire-and-forget doesn't work reliably in production.
+    await generateAndUpdateLesson(id, lesson.outline);
 
-    // Return immediately
+    // Fetch updated lesson (now with generated content or error)
+    const updatedLesson = await getLesson(id);
+
     return NextResponse.json({
-      id: lesson.id,
-      status: 'generating',
-      message: 'Lesson generation restarted',
+      id: updatedLesson?.id || id,
+      status: updatedLesson?.status || 'generating',
+      message: 'Lesson generation completed',
     });
 
   } catch (error) {

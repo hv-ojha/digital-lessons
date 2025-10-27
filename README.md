@@ -144,8 +144,44 @@ Deploy to Vercel:
 
 1. Push code to GitHub
 2. Import repository in Vercel
-3. Add environment variables
+3. Add environment variables (see .env.example)
 4. Deploy
+
+### Important: Serverless Function Configuration
+
+**Lesson generation takes 15-30 seconds.** The app is configured with:
+
+- **`vercel.json`**: Sets 60-second timeout for lesson generation routes
+- **Synchronous generation**: API waits for AI generation to complete before responding
+- **Vercel Pro plan recommended**: Hobby plan has 10-second limit (too short for AI generation)
+
+If you're on Hobby plan and hitting timeouts, consider:
+- Upgrading to Pro plan ($20/month, 60-second timeout)
+- Or optimizing prompts further to reduce generation time
+
+### Troubleshooting Deployment Issues
+
+If your deployed app is not working:
+
+1. **Enable LangSmith tracing** (RECOMMENDED):
+   - Add to Vercel environment variables:
+     ```
+     LANGCHAIN_TRACING_V2=true
+     LANGSMITH_API_KEY=your-langsmith-key
+     LANGSMITH_PROJECT=digital-lessons
+     ```
+   - Get API key from: https://smith.langchain.com
+   - View all AI calls and errors in real-time
+   - See [LANGSMITH_DEBUGGING_GUIDE.md](./LANGSMITH_DEBUGGING_GUIDE.md)
+
+2. **Check health endpoint:** Visit `https://your-app.vercel.app/api/health`
+3. **View detailed logs:** Vercel Dashboard → Your Project → Logs
+4. **Read troubleshooting guide:** See [DEPLOYMENT_TROUBLESHOOTING.md](./DEPLOYMENT_TROUBLESHOOTING.md)
+
+Common issues:
+- ❌ Missing `GEMINI_API_KEY` environment variable
+- ❌ Missing Supabase environment variables
+- ❌ Serverless function timeout (upgrade to Vercel Pro if needed)
 
 ## License
 
