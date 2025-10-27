@@ -93,6 +93,32 @@ export const generateImage = traceable(
     name: 'generate_image',
     run_type: 'llm',
     ...(langsmithClient ? { client: langsmithClient } : {}),
+    metadata: (inputs: any) => ({
+      // Model information
+      primary_model: 'gemini-2.5-flash-image',
+      fallback_model: 'gemini-2.5-flash',
+
+      // Input characteristics
+      prompt_length: inputs.prompt?.length || 0,
+      prompt_word_count: inputs.prompt?.split(' ').length || 0,
+      style: inputs.style || 'illustration',
+      subject: inputs.subject || 'unknown',
+
+      // Context
+      step: 'image_generation',
+      has_fallback: true,
+      fallback_type: 'svg',
+
+      // Environment
+      environment: process.env.NODE_ENV || 'development',
+      deployment: process.env.VERCEL_ENV || 'local',
+    }),
+    tags: [
+      'image-generation',
+      'lesson-assets',
+      'gemini-image',
+      process.env.NODE_ENV || 'development',
+    ],
   }
 );
 

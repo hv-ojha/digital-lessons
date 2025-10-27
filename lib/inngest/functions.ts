@@ -38,14 +38,32 @@ export const generateLessonFunction = inngest.createFunction(
 
     console.log(`\n🎯 [INNGEST] Starting lesson generation for ${lessonId}`);
     console.log(`📋 [INNGEST] Outline: "${outline}"`);
+    console.log(`📊 [INNGEST] Outline analysis:`, {
+      length: outline.length,
+      wordCount: outline.split(' ').length,
+      estimatedComplexity: outline.length > 100 ? 'high' : outline.length > 50 ? 'medium' : 'low',
+    });
 
     // Check if LangSmith is enabled
     const langsmithEnabled = process.env.LANGCHAIN_TRACING_V2 === 'true';
-    console.log(`🔍 [INNGEST] LangSmith tracing: ${langsmithEnabled ? '✅ ENABLED' : '⚠️ DISABLED'}`);
+    console.log(`\n🔍 [INNGEST] LangSmith tracing: ${langsmithEnabled ? '✅ ENABLED' : '⚠️ DISABLED'}`);
     if (langsmithEnabled) {
       console.log(`   Project: ${process.env.LANGSMITH_PROJECT || 'default'}`);
-      console.log(`   All AI calls will be traced in LangSmith dashboard`);
+      console.log(`   All AI calls will be traced with rich metadata:`);
+      console.log(`   - Content type detection (quiz, math, science, etc.)`);
+      console.log(`   - Difficulty analysis (basic, medium, advanced)`);
+      console.log(`   - Feature detection (visuals, interactive, practice)`);
+      console.log(`   - Retry tracking for failed generations`);
+      console.log(`   - Model configuration (provider, temperature, tokens)`);
+      console.log(`   View traces at: https://smith.langchain.com`);
     }
+
+    console.log(`\n🤖 [INNGEST] AI Configuration:`, {
+      provider: process.env.AI_PROVIDER || 'gemini',
+      imageGeneration: process.env.ENABLE_IMAGE_GENERATION === 'true' ? 'enabled' : 'disabled',
+      environment: process.env.NODE_ENV || 'development',
+      deployment: process.env.VERCEL_ENV || 'local',
+    });
 
     // Step 1: Generate lesson content using AI
     // LangSmith will trace all AI calls here!
@@ -56,7 +74,7 @@ export const generateLessonFunction = inngest.createFunction(
       try {
         const generationResult = await generateLesson(outline);
 
-        console.log(`✅ [INNGEST] AI generation completed:`, {
+        console.log(`\n✅ [INNGEST] AI generation completed:`, {
           success: generationResult.success,
           hasTitle: !!generationResult.title,
           hasContent: !!generationResult.content,
@@ -64,12 +82,38 @@ export const generateLessonFunction = inngest.createFunction(
           error: generationResult.error,
         });
 
+        // Log content quality metrics
+        if (generationResult.content) {
+          const lines = generationResult.content.split('\n').length;
+          const hasState = generationResult.content.includes('useState');
+          const hasEffects = generationResult.content.includes('useEffect');
+          const componentCount = (generationResult.content.match(/function \w+/g) || []).length;
+
+          console.log(`📊 [INNGEST] Generated code metrics:`, {
+            lines,
+            components: componentCount,
+            usesState: hasState,
+            usesEffects: hasEffects,
+            estimatedComplexity: lines > 100 ? 'high' : lines > 50 ? 'medium' : 'low',
+          });
+        }
+
         if (langsmithEnabled) {
-          console.log(`🔍 [INNGEST] LangSmith trace created with:`);
-          console.log(`   - generate_lesson (chain)`);
-          console.log(`     └─ generate_lesson_title (llm)`);
-          console.log(`     └─ generate_lesson_code (llm)`);
-          console.log(`   View at: https://smith.langchain.com`);
+          console.log(`\n🔍 [INNGEST] LangSmith trace created with rich metadata:`);
+          console.log(`   generate_lesson (chain) - Full workflow orchestration`);
+          console.log(`   ├─ Metadata: content_type, difficulty, age_level, complexity_score, feature flags`);
+          console.log(`   ├─ Tags: lesson-generation, full-workflow, provider, environment`);
+          console.log(`   │`);
+          console.log(`   ├─ generate_lesson_title (llm) - Title generation`);
+          console.log(`   │  ├─ Metadata: temperature=0.7, outline analysis`);
+          console.log(`   │  └─ Tags: title-generation, lesson-creation, provider, environment`);
+          console.log(`   │`);
+          console.log(`   └─ generate_lesson_code (llm) - Code generation with retries`);
+          console.log(`      ├─ Metadata: temperature=0.3, retry tracking, feature detection`);
+          console.log(`      └─ Tags: code-generation, lesson-creation, provider, environment`);
+          console.log(`\n   🌐 View detailed traces at: https://smith.langchain.com/projects/${process.env.LANGSMITH_PROJECT || 'default'}`);
+          console.log(`   💡 Metadata filters: metadata.retry_count > 0, metadata.content_type = "quiz"`);
+          console.log(`   💡 Tag filters: tag:code-generation, tag:lesson-generation`);
         }
 
         return generationResult;

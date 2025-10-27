@@ -181,8 +181,7 @@ Return ONLY the title, nothing else.`;
       response = await modelProvider.generateText({
         prompt,
         config: {
-          temperature,
-          maxOutputTokens: maxTokens,
+          temperature
         },
       });
 
@@ -211,12 +210,31 @@ Return ONLY the title, nothing else.`;
     name: 'generate_lesson_title',
     run_type: 'llm',
     ...(langsmithClient ? { client: langsmithClient } : {}),
-    metadata: {
+    metadata: (inputs: any) => ({
+      // Model configuration
       provider: process.env.AI_PROVIDER || 'gemini',
       model: modelProvider.getModelName(),
       temperature: 0.7,
       max_tokens: 100,
-    },
+
+      // Input characteristics
+      outline_length: inputs.outline?.length || 0,
+      outline_word_count: inputs.outline?.split(' ').length || 0,
+
+      // Context
+      step: 'title_generation',
+      stage: 'initial',
+
+      // Environment
+      environment: process.env.NODE_ENV || 'development',
+      deployment: process.env.VERCEL_ENV || 'local',
+    }),
+    tags: [
+      'title-generation',
+      'lesson-creation',
+      process.env.AI_PROVIDER || 'gemini',
+      process.env.NODE_ENV || 'development',
+    ],
   }
 );
 
@@ -405,16 +423,58 @@ Generate the CORRECTED code now:`;
     name: 'generate_lesson_code',
     run_type: 'llm',
     ...(langsmithClient ? { client: langsmithClient } : {}),
-    metadata: (inputs: any) => ({
-      provider: process.env.AI_PROVIDER || 'gemini',
-      model: modelProvider.getModelName(),
-      temperature: 0.3,
-      max_tokens: 32768,
-      retry_count: inputs.retryCount || 0,
-      max_retries: MAX_RETRIES,
-      is_retry: (inputs.retryCount || 0) > 0,
-      image_generation_enabled: AI_CONFIG.features.imageGeneration,
-    }),
+    metadata: (inputs: any) => {
+      const inputAnalysis = inputs.outline ? analyzeInputCharacteristics(inputs.outline) : null;
+
+      return {
+        // Model configuration
+        provider: process.env.AI_PROVIDER || 'gemini',
+        model: modelProvider.getModelName(),
+        temperature: 0.3,
+        max_tokens: 32768,
+
+        // Retry information
+        retry_count: inputs.retryCount || 0,
+        max_retries: MAX_RETRIES,
+        is_retry: (inputs.retryCount || 0) > 0,
+        retry_stage: inputs.retryCount === 0 ? 'initial' : inputs.retryCount === MAX_RETRIES ? 'final' : 'retry',
+
+        // Input characteristics
+        outline_length: inputs.outline?.length || 0,
+        outline_word_count: inputs.outline?.split(' ').length || 0,
+        title_length: inputs.title?.length || 0,
+
+        // Content analysis
+        content_type: inputAnalysis?.content_type || 'unknown',
+        difficulty: inputAnalysis?.difficulty || 'unknown',
+        age_level: inputAnalysis?.age_level || 'unknown',
+        complexity_score: inputAnalysis?.complexity_score || 0,
+
+        // Feature flags
+        wants_visuals: inputAnalysis?.wants_visuals || false,
+        wants_interactive: inputAnalysis?.wants_interactive || false,
+        wants_detailed: inputAnalysis?.wants_detailed || false,
+        wants_examples: inputAnalysis?.wants_examples || false,
+        wants_practice: inputAnalysis?.wants_practice || false,
+
+        // Image generation
+        image_generation_enabled: AI_CONFIG.features.imageGeneration,
+
+        // Context
+        step: 'code_generation',
+        stage: inputs.retryCount > 0 ? 'retry' : 'initial',
+
+        // Environment
+        environment: process.env.NODE_ENV || 'development',
+        deployment: process.env.VERCEL_ENV || 'local',
+      };
+    },
+    tags: [
+      'code-generation',
+      'lesson-creation',
+      process.env.AI_PROVIDER || 'gemini',
+      process.env.NODE_ENV || 'development',
+    ],
   }
 );
 
@@ -473,12 +533,56 @@ export const generateLesson = traceable(
     name: 'generate_lesson',
     run_type: 'chain',
     ...(langsmithClient ? { client: langsmithClient } : {}),
-    metadata: {
-      provider: process.env.AI_PROVIDER || 'gemini',
-      model: modelProvider.getModelName(),
-      image_generation_enabled: AI_CONFIG.features.imageGeneration,
-      langsmith_tracing: process.env.LANGCHAIN_TRACING_V2 || 'false',
-      environment: process.env.NODE_ENV || 'development',
+    metadata: (inputs: any) => {
+      const inputAnalysis = inputs.outline ? analyzeInputCharacteristics(inputs.outline) : null;
+
+      return {
+        // Model configuration
+        provider: process.env.AI_PROVIDER || 'gemini',
+        model: modelProvider.getModelName(),
+
+        // Input characteristics
+        outline_length: inputs.outline?.length || 0,
+        outline_word_count: inputs.outline?.split(' ').length || 0,
+
+        // Content analysis
+        content_type: inputAnalysis?.content_type || 'unknown',
+        difficulty: inputAnalysis?.difficulty || 'unknown',
+        age_level: inputAnalysis?.age_level || 'unknown',
+        complexity_score: inputAnalysis?.complexity_score || 0,
+
+        // Feature requests detected
+        wants_visuals: inputAnalysis?.wants_visuals || false,
+        wants_interactive: inputAnalysis?.wants_interactive || false,
+        wants_detailed: inputAnalysis?.wants_detailed || false,
+        wants_concise: inputAnalysis?.wants_concise || false,
+        wants_examples: inputAnalysis?.wants_examples || false,
+        wants_practice: inputAnalysis?.wants_practice || false,
+
+        // Features enabled
+        image_generation_enabled: AI_CONFIG.features.imageGeneration,
+
+        // Tracing
+        langsmith_tracing: process.env.LANGCHAIN_TRACING_V2 || 'false',
+
+        // Context
+        workflow: 'full_lesson_generation',
+        includes_title_gen: true,
+        includes_code_gen: true,
+        includes_validation: true,
+        max_retry_attempts: MAX_RETRIES,
+
+        // Environment
+        environment: process.env.NODE_ENV || 'development',
+        deployment: process.env.VERCEL_ENV || 'local',
+        runtime: 'nodejs',
+      };
     },
+    tags: [
+      'lesson-generation',
+      'full-workflow',
+      process.env.AI_PROVIDER || 'gemini',
+      process.env.NODE_ENV || 'development',
+    ],
   }
 );
