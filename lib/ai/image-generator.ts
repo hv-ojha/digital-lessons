@@ -6,6 +6,21 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import { traceable } from 'langsmith/traceable';
+import { Client } from 'langsmith';
+
+// Initialize LangSmith client for image generation traces
+let langsmithClient: Client | null = null;
+if (process.env.LANGCHAIN_TRACING_V2 === 'true' && process.env.LANGSMITH_API_KEY) {
+  try {
+    langsmithClient = new Client({
+      apiKey: process.env.LANGSMITH_API_KEY,
+      apiUrl: process.env.LANGCHAIN_ENDPOINT || 'https://api.smith.langchain.com',
+    });
+  } catch (error) {
+    console.warn('⚠️  Failed to initialize LangSmith client for image generation:', error);
+  }
+}
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -38,7 +53,8 @@ export interface ImageGenerationResult {
  * 1. Try Gemini 2.5 Flash Image (realistic AI-generated images)
  * 2. Fallback to enhanced SVG generation
  */
-export async function generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResult> {
+export const generateImage = traceable(
+  async function generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResult> {
     try {
       console.log(`🎨 Generating image with Gemini 2.5 Flash Image: "${request.prompt}"`);
 
@@ -72,7 +88,13 @@ export async function generateImage(request: ImageGenerationRequest): Promise<Im
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
-}
+  },
+  {
+    name: 'generate_image',
+    run_type: 'llm',
+    ...(langsmithClient ? { client: langsmithClient } : {}),
+  }
+);
 
 /**
  * Generate image using Gemini 2.5 Flash Image model

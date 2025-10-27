@@ -1,31 +1,41 @@
-import { GoogleGenAI } from '@google/genai';
+import { traceable } from 'langsmith/traceable';
+import { Client } from 'langsmith';
 import { LessonGenerationResult } from '@/types/lesson';
 import { validateTypeScriptCode } from './validation';
 import { getSystemPrompt, getUserPrompt } from './prompts';
 import { generateImage, extractImageRequirements, ImageGenerationRequest } from './image-generator';
 import { AI_CONFIG } from './config';
-import { getCachedContent, buildConfigWithCache } from './cache-manager';
+import { getModelProvider } from './models/factory';
+import { AIModelProvider } from './models/base';
 
-// Initialize Google Gemini client
-const apiKey = process.env.GEMINI_API_KEY;
-
-// Debug: Check if API key is loaded
-if (!apiKey) {
-  const errorMsg = '❌ CRITICAL: GEMINI_API_KEY is not set in environment variables. Please configure it in your deployment settings.';
-  console.error(errorMsg);
-  console.error('Environment variables available:', Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('API')));
-  throw new Error('GEMINI_API_KEY is required. Please set it in your environment variables.');
+// Initialize LangSmith client
+let langsmithClient: Client | null = null;
+if (process.env.LANGCHAIN_TRACING_V2 === 'true') {
+  try {
+    langsmithClient = new Client({
+      apiKey: process.env.LANGSMITH_API_KEY,
+      apiUrl: process.env.LANGCHAIN_ENDPOINT || 'https://api.smith.langchain.com',
+    });
+    console.log('✅ LangSmith client initialized');
+    console.log(`   Project: ${process.env.LANGSMITH_PROJECT || 'default'}`);
+  } catch (error) {
+    console.warn('⚠️  Failed to initialize LangSmith client:', error);
+    console.warn('   Traces will not be sent to LangSmith');
+  }
 } else {
-  console.log('✅ GEMINI_API_KEY is loaded:', apiKey.substring(0, 20) + '... (length: ' + apiKey.length + ')');
+  console.log('ℹ️  LangSmith tracing is disabled (LANGCHAIN_TRACING_V2 != true)');
 }
 
-let genAI: GoogleGenAI;
+// Initialize AI model provider using factory pattern
+let modelProvider: AIModelProvider;
 try {
-  genAI = new GoogleGenAI({ apiKey: apiKey });
-  console.log('✅ GoogleGenAI client initialized successfully');
+  modelProvider = getModelProvider();
+  console.log('✅ AI model provider initialized');
+  console.log(`   Provider: ${process.env.AI_PROVIDER || 'gemini'}`);
+  console.log(`   Model: ${modelProvider.getModelName()}`);
 } catch (error) {
-  console.error('❌ Failed to initialize GoogleGenAI client:', error);
-  throw new Error(`Failed to initialize GoogleGenAI: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  console.error('❌ Failed to initialize AI model provider:', error);
+  throw new Error(`Failed to initialize AI provider: ${error instanceof Error ? error.message : 'Unknown error'}`);
 }
 
 /**
@@ -148,8 +158,8 @@ function calculateLessonComplexity(code: string, qualityMetrics: ReturnType<type
 /**
  * Generate a lesson title from the outline
  */
-async function generateLessonTitle(outline: string): Promise<string> {
-    const modelName = 'gemini-2.5-flash';
+const generateLessonTitle = traceable(
+  async function generateLessonTitle(outline: string): Promise<string> {
     const temperature = 0.7;
     const maxTokens = 100;
 
@@ -161,28 +171,39 @@ Return ONLY the title, nothing else.`;
 
     let response;
     try {
-      response = await genAI.models.generateContent({
-        model: modelName,
-        contents: prompt,
+      response = await modelProvider.generateText({
+        prompt,
         config: {
           temperature,
           maxOutputTokens: maxTokens,
         },
       });
     } catch (error) {
-      console.error('❌ Gemini API call failed for title generation:', error);
+      console.error('❌ AI model call failed for title generation:', error);
       console.error('Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
-        modelName,
+        model: modelProvider.getModelName(),
         promptLength: prompt.length,
       });
-      throw new Error(`Gemini API call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`AI model call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     const title = response.text?.trim() || 'Untitled Lesson';
 
     return title;
-}
+  },
+  {
+    name: 'generate_lesson_title',
+    run_type: 'llm',
+    ...(langsmithClient ? { client: langsmithClient } : {}),
+    metadata: {
+      provider: process.env.AI_PROVIDER || 'gemini',
+      model: modelProvider.getModelName(),
+      temperature: 0.7,
+      max_tokens: 100,
+    },
+  }
+);
 
 /**
  * Generate TypeScript/React code for the lesson with automatic retry on validation errors
@@ -192,8 +213,8 @@ Return ONLY the title, nothing else.`;
  */
 const MAX_RETRIES = 3; // Increased from 2 for better reliability
 
-async function generateLessonCode(outline: string, title: string, retryCount = 0): Promise<string> {
-    const modelName = 'gemini-2.5-flash';
+const generateLessonCode = traceable(
+  async function generateLessonCode(outline: string, title: string, retryCount = 0): Promise<string> {
     const temperature = 0.3;
     const maxTokens = 32768; // Increased to allow very large components with lots of content
 
@@ -268,41 +289,43 @@ Generate the CORRECTED code now:`;
       fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\n${errorContext}`;
     }
 
-    // Cache the system prompt to save ~90% on input tokens (especially helpful for retries)
-    console.log(`\n💾 Checking prompt cache...`);
-    const cacheId = await getCachedContent(genAI, systemPrompt, modelName);
-
     let response;
     try {
-      console.log(`🔄 Calling Gemini API for lesson code generation...`);
-      console.log(`   Model: ${modelName}`);
+      console.log(`🔄 Calling AI model for lesson code generation...`);
+      console.log(`   Provider: ${process.env.AI_PROVIDER || 'gemini'}`);
+      console.log(`   Model: ${modelProvider.getModelName()}`);
       console.log(`   Prompt length: ${fullPrompt.length} chars (~${Math.round(fullPrompt.length / 4)} tokens)`);
       console.log(`   Temperature: ${temperature}`);
       console.log(`   Max tokens: ${maxTokens}`);
+      console.log(`   Retry count: ${retryCount}/${MAX_RETRIES}`);
 
-      response = await genAI.models.generateContent({
-        model: modelName,
-        contents: fullPrompt,
-        config: buildConfigWithCache(cacheId, temperature, maxTokens),
+      response = await modelProvider.generateText({
+        prompt: userPrompt,
+        systemPrompt: systemPrompt,
+        config: {
+          temperature,
+          maxOutputTokens: maxTokens,
+        },
       });
 
-      console.log(`✅ Gemini API call successful`);
+      console.log(`✅ AI model call successful`);
     } catch (error) {
-      console.error(`❌ Gemini API call failed for lesson code generation (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`);
+      console.error(`❌ AI model call failed for lesson code generation (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`);
       console.error('Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
-        modelName,
+        provider: process.env.AI_PROVIDER || 'gemini',
+        model: modelProvider.getModelName(),
         promptLength: fullPrompt.length,
         retryCount,
       });
 
       // If it's a network/API error and we have retries left, throw to trigger retry
       if (retryCount < MAX_RETRIES) {
-        throw new Error(`Gemini API call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(`AI model call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } else {
         // Out of retries, throw final error
-        throw new Error(`Gemini API call failed after ${MAX_RETRIES} retries: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(`AI model call failed after ${MAX_RETRIES} retries: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
@@ -362,19 +385,38 @@ Generate the CORRECTED code now:`;
     }
 
     return code;
-}
+  },
+  {
+    name: 'generate_lesson_code',
+    run_type: 'llm',
+    ...(langsmithClient ? { client: langsmithClient } : {}),
+    metadata: (inputs: any) => ({
+      provider: process.env.AI_PROVIDER || 'gemini',
+      model: modelProvider.getModelName(),
+      temperature: 0.3,
+      max_tokens: 32768,
+      retry_count: inputs.retryCount || 0,
+      max_retries: MAX_RETRIES,
+      is_retry: (inputs.retryCount || 0) > 0,
+      image_generation_enabled: AI_CONFIG.features.imageGeneration,
+    }),
+  }
+);
 
 // Store validation errors from previous attempt (scoped to this module)
 let validation_errors_from_previous_attempt: string[] = [];
 
 /**
  * Main function to generate a complete lesson
+ * Wrapped with LangSmith tracing for debugging
  */
-export async function generateLesson(outline: string): Promise<LessonGenerationResult> {
+export const generateLesson = traceable(
+  async function generateLesson(outline: string): Promise<LessonGenerationResult> {
     const startTime = Date.now();
 
     try {
       console.log(`\n🚀 Starting lesson generation for: "${outline}"`);
+      console.log(`📊 LangSmith tracing: ${process.env.LANGCHAIN_TRACING_V2 || 'disabled'}`);
 
       // Step 1: Generate title
       console.log(`\n📌 Step 1: Generating lesson title...`);
@@ -411,4 +453,17 @@ export async function generateLesson(outline: string): Promise<LessonGenerationR
         error: error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
-}
+  },
+  {
+    name: 'generate_lesson',
+    run_type: 'chain',
+    ...(langsmithClient ? { client: langsmithClient } : {}),
+    metadata: {
+      provider: process.env.AI_PROVIDER || 'gemini',
+      model: modelProvider.getModelName(),
+      image_generation_enabled: AI_CONFIG.features.imageGeneration,
+      langsmith_tracing: process.env.LANGCHAIN_TRACING_V2 || 'false',
+      environment: process.env.NODE_ENV || 'development',
+    },
+  }
+);
