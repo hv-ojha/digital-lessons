@@ -1,5 +1,4 @@
 import { GoogleGenAI } from '@google/genai';
-import { traceable } from 'langsmith/traceable';
 import { LessonGenerationResult } from '@/types/lesson';
 import { validateTypeScriptCode } from './validation';
 import { getSystemPrompt, getUserPrompt } from './prompts';
@@ -149,8 +148,7 @@ function calculateLessonComplexity(code: string, qualityMetrics: ReturnType<type
 /**
  * Generate a lesson title from the outline
  */
-const generateLessonTitle = traceable(
-  async function generateLessonTitle(outline: string): Promise<string> {
+async function generateLessonTitle(outline: string): Promise<string> {
     const modelName = 'gemini-2.5-flash';
     const temperature = 0.7;
     const maxTokens = 100;
@@ -184,37 +182,7 @@ Return ONLY the title, nothing else.`;
     const title = response.text?.trim() || 'Untitled Lesson';
 
     return title;
-  },
-  {
-    name: 'generate_lesson_title',
-    run_type: 'llm',
-    metadata: (inputs: any, output: any) => {
-      const outline = inputs.outline || '';
-      const title = output || '';
-      const inputTokens = estimateTokens(outline);
-      const outputTokens = estimateTokens(title);
-
-      return {
-        model: 'gemini-2.5-flash',
-        temperature: 0.7,
-        max_output_tokens: 100,
-        // Token tracking
-        input_tokens: inputTokens,
-        output_tokens: outputTokens,
-        total_tokens: inputTokens + outputTokens,
-        estimated_cost_usd: 0, // Gemini is free
-        // Output quality
-        title_length: title.length,
-        title_word_count: title.split(' ').length,
-      };
-    },
-    tags: [
-      process.env.NODE_ENV || 'development',
-      'title-generation',
-      'llm-call'
-    ]
-  }
-);
+}
 
 /**
  * Generate TypeScript/React code for the lesson with automatic retry on validation errors
@@ -224,8 +192,7 @@ Return ONLY the title, nothing else.`;
  */
 const MAX_RETRIES = 3; // Increased from 2 for better reliability
 
-const generateLessonCode = traceable(
-  async function generateLessonCode(outline: string, title: string, retryCount = 0): Promise<string> {
+async function generateLessonCode(outline: string, title: string, retryCount = 0): Promise<string> {
     const modelName = 'gemini-2.5-flash';
     const temperature = 0.3;
     const maxTokens = 32768; // Increased to allow very large components with lots of content
@@ -395,74 +362,7 @@ Generate the CORRECTED code now:`;
     }
 
     return code;
-  },
-  {
-    name: 'generate_lesson_code',
-    run_type: 'llm',
-    metadata: (inputs: any, output: any) => {
-      const retryCount = inputs.retryCount || 0;
-      const outline = inputs.outline || '';
-      const title = inputs.title || '';
-      const code = output || '';
-      const isRetry = retryCount > 0;
-
-      // Token tracking
-      const promptText = outline + title;
-      const inputTokens = estimateTokens(promptText);
-      const outputTokens = estimateTokens(code);
-
-      // Quality metrics
-      const qualityMetrics = code ? analyzeCodeQuality(code) : {
-        svg_count: 0,
-        button_count: 0,
-        input_count: 0,
-        has_state: false,
-        has_effect: false,
-        has_callback: false,
-        has_memo: false,
-        component_count: 0,
-      };
-
-      // Count embedded images (data:image URIs)
-      const embeddedImageCount = code ? (code.match(/data:image\//g) || []).length : 0;
-      const hasPngImages = code ? code.includes('data:image/png') : false;
-      const hasSvgImages = code ? code.includes('data:image/svg') : false;
-
-      return {
-        model: 'gemini-2.5-flash',
-        temperature: 0.3,
-        max_output_tokens: 8192,
-        // Retry context
-        retry_count: retryCount,
-        max_retries: MAX_RETRIES,
-        is_retry: isRetry,
-        outline_length: outline.length,
-        has_validation_errors: isRetry,
-        previous_error_count: isRetry ? validation_errors_from_previous_attempt.length : 0,
-        previous_errors: isRetry ? validation_errors_from_previous_attempt.slice(0, 3) : [], // First 3 errors
-        // Token tracking
-        input_tokens: inputTokens,
-        output_tokens: outputTokens,
-        total_tokens: inputTokens + outputTokens,
-        estimated_cost_usd: 0, // Gemini is free
-        // Output quality
-        code_length: code.length,
-        code_lines: code ? code.split('\n').length : 0,
-        ...qualityMetrics,
-        // Image generation
-        embedded_image_count: embeddedImageCount,
-        has_png_images: hasPngImages,
-        has_svg_images: hasSvgImages,
-        has_any_images: embeddedImageCount > 0,
-      };
-    },
-    tags: [
-      process.env.NODE_ENV || 'development',
-      'code-generation',
-      'llm-call',
-    ]
-  }
-);
+}
 
 // Store validation errors from previous attempt (scoped to this module)
 let validation_errors_from_previous_attempt: string[] = [];
@@ -470,8 +370,7 @@ let validation_errors_from_previous_attempt: string[] = [];
 /**
  * Main function to generate a complete lesson
  */
-export const generateLesson = traceable(
-  async function generateLesson(outline: string): Promise<LessonGenerationResult> {
+export async function generateLesson(outline: string): Promise<LessonGenerationResult> {
     const startTime = Date.now();
 
     try {
@@ -512,71 +411,4 @@ export const generateLesson = traceable(
         error: error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
-  },
-  {
-    name: 'generate_lesson',
-    run_type: 'chain',
-    metadata: (inputs: any, output: any) => {
-      const outline = inputs.outline || '';
-      const success = output?.success || false;
-      const error = output?.error;
-      const content = output?.content || '';
-      const contentLength = content.length;
-
-      // Analyze input characteristics
-      const inputAnalysis = analyzeInputCharacteristics(outline);
-
-      // Quality metrics for successful generations
-      const qualityMetrics = success && content ? analyzeCodeQuality(content) : null;
-
-      // Complexity score
-      const lessonComplexity = qualityMetrics ? calculateLessonComplexity(content, qualityMetrics) : null;
-
-      // Enhanced error context
-      let errorDetails = null;
-      if (!success && error) {
-        errorDetails = {
-          error_message: error,
-          error_type: error.includes('validation') ? 'validation' :
-                      error.includes('retries') ? 'max-retries' :
-                      error.includes('timeout') ? 'timeout' : 'unknown',
-          is_validation_error: error.includes('validation'),
-          is_retry_exhausted: error.includes('retries'),
-          error_length: error.length,
-        };
-      }
-
-      return {
-        // Enhanced input analysis
-        ...inputAnalysis,
-        // Outcome
-        success,
-        has_error: !!error,
-        // Output metrics
-        output_code_length: contentLength,
-        output_code_lines: contentLength > 0 ? content.split('\n').length : 0,
-        // Quality metrics (only for successful generations)
-        ...(qualityMetrics ? {
-          svg_count: qualityMetrics.svg_count,
-          button_count: qualityMetrics.button_count,
-          input_count: qualityMetrics.input_count,
-          has_state: qualityMetrics.has_state,
-          has_effect: qualityMetrics.has_effect,
-          has_callback: qualityMetrics.has_callback,
-          has_memo: qualityMetrics.has_memo,
-          component_count: qualityMetrics.component_count,
-          is_interactive: qualityMetrics.has_state || qualityMetrics.has_effect,
-          has_visuals: qualityMetrics.svg_count > 0,
-          lesson_complexity: lessonComplexity,
-        } : {}),
-        // Error details (only for failures)
-        ...(errorDetails || {}),
-      };
-    },
-    tags: [
-      process.env.NODE_ENV || 'development',
-      'lesson-generation',
-      'chain',
-    ]
-  }
-);
+}

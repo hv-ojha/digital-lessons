@@ -6,7 +6,6 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
-import { traceable } from 'langsmith/traceable';
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -39,8 +38,7 @@ export interface ImageGenerationResult {
  * 1. Try Gemini 2.5 Flash Image (realistic AI-generated images)
  * 2. Fallback to enhanced SVG generation
  */
-export const generateImage = traceable(
-  async function generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResult> {
+export async function generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResult> {
     try {
       console.log(`🎨 Generating image with Gemini 2.5 Flash Image: "${request.prompt}"`);
 
@@ -74,32 +72,7 @@ export const generateImage = traceable(
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
-  },
-  {
-    name: 'generate_image',
-    run_type: 'llm',
-    metadata: (inputs: any, output: any) => {
-      const request = inputs.request as ImageGenerationRequest;
-      const result = output as ImageGenerationResult;
-
-      return {
-        model: result.imageType === 'png' ? 'gemini-2.5-flash-image' : 'gemini-2.5-flash',
-        prompt: request.prompt,
-        style: request.style || 'illustration',
-        subject: request.subject,
-        success: result.success,
-        image_type: result.imageType,
-        has_error: !!result.error,
-        used_ai_image: result.imageType === 'png',
-        used_svg_fallback: result.imageType === 'svg',
-      };
-    },
-    tags: [
-      process.env.NODE_ENV || 'development',
-      'image-generation',
-    ]
-  }
-);
+}
 
 /**
  * Generate image using Gemini 2.5 Flash Image model
