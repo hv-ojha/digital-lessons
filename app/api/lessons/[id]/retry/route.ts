@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLesson, updateLessonStatus } from '@/lib/db/lessons-server';
-import { generateLesson } from '@/lib/ai/generator';
+import { inngest } from '@/lib/inngest/client';
 
 /**
  * POST /api/lessons/[id]/retry - Retry generating a failed lesson
@@ -33,18 +33,21 @@ export async function POST(
     // Update status back to generating
     await updateLessonStatus(id, 'generating');
 
-    // IMPORTANT: Must await generation to prevent serverless function from terminating
-    // before the AI call completes. Serverless functions can be killed after sending
-    // the response, so fire-and-forget doesn't work reliably in production.
-    await generateAndUpdateLesson(id, lesson.outline);
+    // Trigger Inngest background job for retry
+    await inngest.send({
+      name: 'lesson/generate.requested',
+      data: {
+        lessonId: id,
+        outline: lesson.outline,
+      },
+    });
 
-    // Fetch updated lesson (now with generated content or error)
-    const updatedLesson = await getLesson(id);
+    console.log(`✅ Lesson ${id} retry queued via Inngest`);
 
     return NextResponse.json({
-      id: updatedLesson?.id || id,
-      status: updatedLesson?.status || 'generating',
-      message: 'Lesson generation completed',
+      id: id,
+      status: 'generating',
+      message: 'Lesson retry queued for generation',
     });
 
   } catch (error) {
@@ -56,34 +59,3 @@ export async function POST(
   }
 }
 
-/**
- * Background function to generate lesson and update database
- */
-async function generateAndUpdateLesson(lessonId: string, outline: string) {
-  try {
-    console.log(`Retrying generation for lesson ${lessonId}`);
-
-    // Generate the lesson using AI
-    const result = await generateLesson(outline);
-
-    if (result.success && result.content) {
-      // Update lesson with generated content
-      await updateLessonStatus(lessonId, 'completed', result.content);
-      console.log(`Successfully regenerated lesson ${lessonId}`);
-    } else {
-      // Update lesson with error
-      await updateLessonStatus(
-        lessonId,
-        'failed',
-        undefined,
-        result.error || 'Generation failed'
-      );
-      console.error(`Failed to regenerate lesson ${lessonId}:`, result.error);
-    }
-  } catch (error) {
-    // Update lesson with error
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    await updateLessonStatus(lessonId, 'failed', undefined, errorMessage);
-    console.error(`Error in generateAndUpdateLesson for ${lessonId}:`, error);
-  }
-}

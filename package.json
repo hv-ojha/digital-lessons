@@ -18,6 +18,7 @@
     "@typescript/vfs": "^1.6.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "inngest": "^3.44.3",
     "langsmith": "^0.3.74",
     "lucide-react": "^0.511.0",
     "next": "latest",
