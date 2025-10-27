@@ -44,14 +44,42 @@ export class GeminiModelProvider extends AIModelProvider {
       },
     });
 
-    const text = response.text?.trim() || '';
+    // Debug: Check response structure
+    console.log('🔍 [DEBUG] Gemini response structure:', {
+      hasText: !!response.text,
+      hasCandidates: !!response.candidates,
+      candidatesLength: response.candidates?.length,
+      firstCandidate: response.candidates?.[0] ? 'exists' : 'missing',
+    });
+
+    // Extract text from response - Gemini SDK provides convenience property
+    let text = '';
+
+    if (response.text) {
+      // Convenience property exists
+      text = response.text.trim();
+    } else if (response.candidates && response.candidates.length > 0) {
+      // Fallback: extract from candidates
+      const candidate = response.candidates[0];
+      if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+        const part = candidate.content.parts[0];
+        if (part.text) {
+          text = part.text.trim();
+        }
+      }
+    }
+
+    console.log('🔍 [DEBUG] Extracted text:', {
+      textLength: text.length,
+      preview: text.substring(0, 100),
+    });
 
     // Estimate tokens (Gemini doesn't return exact counts in response)
     const inputTokens = this.estimateTokens(fullPrompt);
     const outputTokens = this.estimateTokens(text);
 
     return {
-      text,
+      text: text || '',
       model: this.modelName,
       tokensUsed: {
         input: inputTokens,

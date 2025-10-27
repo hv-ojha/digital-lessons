@@ -171,12 +171,25 @@ Return ONLY the title, nothing else.`;
 
     let response;
     try {
+      console.log('📤 [TITLE] Sending prompt to AI:', {
+        promptLength: prompt.length,
+        model: modelProvider.getModelName(),
+        temperature,
+        maxTokens,
+      });
+
       response = await modelProvider.generateText({
         prompt,
         config: {
           temperature,
           maxOutputTokens: maxTokens,
         },
+      });
+
+      console.log('📥 [TITLE] Received response from AI:', {
+        hasText: !!response.text,
+        textLength: response.text?.length || 0,
+        text: response.text,
       });
     } catch (error) {
       console.error('❌ AI model call failed for title generation:', error);
@@ -189,6 +202,8 @@ Return ONLY the title, nothing else.`;
     }
 
     const title = response.text?.trim() || 'Untitled Lesson';
+
+    console.log('✅ [TITLE] Final title:', title);
 
     return title;
   },

@@ -58,10 +58,19 @@ export const generateLessonFunction = inngest.createFunction(
 
         console.log(`✅ [INNGEST] AI generation completed:`, {
           success: generationResult.success,
+          hasTitle: !!generationResult.title,
           hasContent: !!generationResult.content,
           contentLength: generationResult.content?.length || 0,
           error: generationResult.error,
         });
+
+        if (langsmithEnabled) {
+          console.log(`🔍 [INNGEST] LangSmith trace created with:`);
+          console.log(`   - generate_lesson (chain)`);
+          console.log(`     └─ generate_lesson_title (llm)`);
+          console.log(`     └─ generate_lesson_code (llm)`);
+          console.log(`   View at: https://smith.langchain.com`);
+        }
 
         return generationResult;
       } catch (error) {
