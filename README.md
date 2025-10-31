@@ -23,7 +23,7 @@ This project demonstrates:
 - 📚 **7 Content Formats** - Explanation, Tutorial, Story, Interactive, Assessment, Exploration, Mixed
 - ✅ **Automatic Validation** - JSON schema validation with automatic retries
 - 🔄 **Real-time Updates** - Watch lessons generate in real-time via Supabase subscriptions
-- 🖼️ **Optional Image Generation** - AI-generated images using Gemini 2.5 Flash (disabled by default)
+- 🎨 **Inline SVG Illustrations** - AI-generated scalable vector graphics (always enabled, no API calls needed)
 - 📊 **LangSmith Tracing** - Full observability of AI calls, token usage, and performance
 - 💰 **Cost Optimized** - 95% token reduction vs traditional approaches
 
@@ -53,9 +53,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # Required - AI Model
 GEMINI_API_KEY=your-gemini-api-key
-
-# Optional - Feature Flags
-ENABLE_IMAGE_GENERATION=false        # Enable AI image generation (disabled by default)
 
 # Optional - Observability (Recommended)
 LANGCHAIN_TRACING_V2=true
@@ -331,23 +328,21 @@ The app uses **JSON-based generation with flexible content blocks** (always enab
 - Adapts automatically to any prompt
 - No configuration needed!
 
-### Image Generation
+### Visual Content (SVG)
 
-**Default:** Disabled (for cost savings)
+**Always enabled** - No configuration needed!
 
-```bash
-ENABLE_IMAGE_GENERATION=false
-```
+The AI automatically generates inline SVG illustrations when appropriate:
+- ✅ **Zero cost** - No separate API calls
+- ✅ **Instant** - Generated with lesson content
+- ✅ **Scalable** - Perfect quality at any size
+- ✅ **Lightweight** - Text-based, minimal storage
+- ✅ **Educational** - Simple, colorful diagrams
 
-**When to enable:**
-- Need visual diagrams in lessons
-- Teaching visual subjects (geography, biology, etc.)
-- Want illustrations for educational content
-
-**Benefits of disabling:**
-- ⚡ Faster generation (5-10s vs 15-20s)
-- 💰 Lower API costs
-- 🚀 Simpler text-based lessons
+SVGs are perfect for:
+- Scientific diagrams (solar system, water cycle, etc.)
+- Math illustrations (shapes, graphs, etc.)
+- Concept visualizations (networks, processes, etc.)
 
 ## 🔑 Get API Keys
 
@@ -372,7 +367,6 @@ ENABLE_IMAGE_GENERATION=false
 ### Optional
 - `AI_PROVIDER=gemini` - Change AI provider
 - `AI_MODEL_NAME=gemini-2.5-flash` - Change model
-- `ENABLE_IMAGE_GENERATION=false` - Toggle image gen
 
 ## 🧪 Development
 

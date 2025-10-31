@@ -63,7 +63,7 @@ export const generateLessonFunction = inngest.createFunction(
     console.log(`\n🤖 [INNGEST] AI Configuration:`, {
       provider: process.env.AI_PROVIDER || 'gemini',
       generatorType: 'JSON with flexible content (95% token savings - always enabled)',
-      imageGeneration: process.env.ENABLE_IMAGE_GENERATION === 'true' ? 'enabled' : 'disabled',
+      svgGeneration: 'inline (always enabled)',
       environment: process.env.NODE_ENV || 'development',
       deployment: process.env.VERCEL_ENV || 'local',
     });

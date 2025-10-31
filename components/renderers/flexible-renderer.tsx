@@ -41,13 +41,21 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
       case 'visual':
         return (
           <div key={index} className="flex flex-col items-center gap-3">
-            {block.image ? (
+            {block.svg ? (
+              // Render inline SVG
+              <div
+                className="w-full max-w-md rounded-lg shadow-md bg-white dark:bg-slate-900 p-4"
+                dangerouslySetInnerHTML={{ __html: block.svg }}
+              />
+            ) : block.image ? (
+              // Render base64 image (if image generation is enabled)
               <img
                 src={block.image.src}
                 alt={block.image.alt}
                 className="w-full max-w-md rounded-lg shadow-md"
               />
             ) : (
+              // Fallback: show description only
               <div className="w-full max-w-md h-64 bg-accent/10 rounded-lg flex items-center justify-center">
                 <p className="text-muted-foreground text-center p-6">{block.description}</p>
               </div>

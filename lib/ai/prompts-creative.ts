@@ -78,14 +78,20 @@ FORMATS:
 - mixed: Combine multiple approaches
 
 BLOCKS (building pieces):
-{"type":"text","content":"...","style":"paragraph|heading|highlight"}
-{"type":"visual","description":"...","caption":"..."}
+{"type":"text","content":"Use **Markdown** for rich formatting","style":"paragraph|heading|highlight"}
+{"type":"visual","svg":"<svg>...</svg>","description":"...","caption":"..."}
 {"type":"question","question":"...","options":[...],"correctIndex":0}
 {"type":"example","title":"...","content":"..."}
 {"type":"activity","instruction":"...","steps":[...]}
 {"type":"takeaway","points":[...]}
 {"type":"story","narrative":"...","character":"..."}
 {"type":"callout","variant":"tip|fun-fact|warning","content":"..."}
+
+VISUAL BLOCKS:
+- Include inline SVG for diagrams, illustrations, icons
+- SVG should be simple, educational, and colorful
+- Use viewBox="0 0 400 400" for consistency
+- Example: <svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="100" fill="#4CAF50"/></svg>
 
 STRUCTURE:
 {

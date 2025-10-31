@@ -24,7 +24,6 @@ import {
   getCreativeRetryPrompt
 } from './prompts-creative';
 
-import { generateImage, extractImageRequirements } from './image-generator';
 import { AI_CONFIG } from './config';
 import { getModelProvider } from './models/factory';
 import { AIModelProvider } from './models/base';
@@ -115,34 +114,7 @@ const generateLessonContent = traceable(
     const maxTokens = 4096; // Much smaller than before! (was 32768)
 
     console.log(`\n🎨 Generating lesson JSON (Attempt ${retryCount + 1}/${MAX_RETRIES + 1})...`);
-    console.log(`   Mode: Flexible/Creative (adapts to any prompt)`);
-
-    // Generate images if needed (only on first attempt)
-    let generatedImages: Map<string, string> = new Map();
-    if (retryCount === 0 && AI_CONFIG.features.imageGeneration) {
-      console.log(`\n🖼️  Image generation enabled`);
-
-      const imageRequirements = extractImageRequirements(outline);
-
-      if (imageRequirements.length > 0) {
-        console.log(`\n🖼️  Generating ${imageRequirements.length} image(s)...`);
-
-        for (const req of imageRequirements) {
-          try {
-            console.log(`   Generating: ${req.prompt}`);
-            const result = await generateImage(req);
-
-            if (result.success && result.imageData) {
-              const key = req.subject || req.prompt;
-              generatedImages.set(key, result.imageData);
-              console.log(`   ✅ Generated ${result.imageType} image for: ${key}`);
-            }
-          } catch (error) {
-            console.warn(`   ⚠️  Image generation failed:`, error);
-          }
-        }
-      }
-    }
+    console.log(`   Mode: Flexible/Creative (adapts to any prompt with inline SVG support)`);
 
     // Build prompt - always use flexible/creative prompts
     const systemPrompt = getCreativeSystemPrompt();
@@ -150,13 +122,6 @@ const generateLessonContent = traceable(
 
     if (retryCount === 0) {
       userPrompt = getCreativeUserPrompt(outline, title);
-
-      // Add image context if available
-      if (generatedImages.size > 0) {
-        const imageKeys = Array.from(generatedImages.keys());
-        userPrompt += `\n\nAVAILABLE IMAGES: ${imageKeys.join(', ')}
-You can reference these in your JSON using placeholders like: {"src": "{IMAGE:${imageKeys[0]}}", "alt": "description"}`;
-      }
     } else {
       userPrompt = getCreativeRetryPrompt(outline, title, previousError!, previousJson);
     }
@@ -190,18 +155,6 @@ You can reference these in your JSON using placeholders like: {"src": "{IMAGE:${
     jsonText = jsonText.replace(/```json\s*\n?/g, '').replace(/```\s*$/g, '').trim();
 
     console.log(`📝 Received JSON (${jsonText.length} chars, ~${estimateTokens(jsonText)} tokens)`);
-
-    // Replace image placeholders with actual base64 data
-    if (generatedImages.size > 0) {
-      console.log(`\n🖼️  Embedding ${generatedImages.size} image(s)...`);
-      for (const [key, imageData] of generatedImages.entries()) {
-        const placeholder = `{IMAGE:${key}}`;
-        if (jsonText.includes(placeholder)) {
-          jsonText = jsonText.replace(new RegExp(placeholder, 'g'), imageData);
-          console.log(`   ✅ Embedded image: ${key}`);
-        }
-      }
-    }
 
     // Parse and validate JSON
     console.log(`📝 Parsing and validating JSON...`);
@@ -262,7 +215,7 @@ You can reference these in your JSON using placeholders like: {"src": "{IMAGE:${
       retry_count: inputs.retryCount || 0,
       max_retries: MAX_RETRIES,
       is_retry: (inputs.retryCount || 0) > 0,
-      image_generation_enabled: AI_CONFIG.features.imageGeneration,
+      svg_generation: 'inline',
       approach: 'json-structured',
       token_optimization: 'enabled',
     }),

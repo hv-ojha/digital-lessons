@@ -34,10 +34,11 @@ const TextBlockSchema = z.object({
   style: z.enum(['paragraph', 'heading', 'subheading', 'highlight', 'quote']).optional(),
 });
 
-// Visual element (image/diagram)
+// Visual element (image/diagram/SVG)
 const VisualBlockSchema = z.object({
   type: z.literal('visual'),
-  image: ImageSchema.optional(),
+  svg: z.string().optional(), // Inline SVG code
+  image: ImageSchema.optional(), // Fallback for base64 images
   caption: z.string().optional(),
   description: z.string(),
 });
