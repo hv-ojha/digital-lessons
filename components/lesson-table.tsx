@@ -153,7 +153,7 @@ export function LessonTable({ initialLessons }: LessonTableProps) {
 
   // Get icon and gradient based on lesson type or default
   const getLessonIcon = (lesson: Lesson) => {
-    const type = lesson.type?.toLowerCase() || 'general';
+    const type = lesson.lesson_type?.toLowerCase() || 'general';
     const iconClass = "w-20 h-20 animate-float";
 
     switch (type) {
@@ -174,7 +174,7 @@ export function LessonTable({ initialLessons }: LessonTableProps) {
   };
 
   const getGradientForType = (lesson: Lesson): "purple" | "blue" | "green" | "yellow" | "pink" => {
-    const type = lesson.type?.toLowerCase() || 'general';
+    const type = lesson.lesson_type?.toLowerCase() || 'general';
     switch (type) {
       case 'math':
         return 'blue';

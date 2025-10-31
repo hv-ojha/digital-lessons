@@ -202,7 +202,7 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
           {/* Left Column */}
           <div className="space-y-3">
             <div className="text-center mb-4">
-              <PlayfulBadge variant="magic" size="default">
+              <PlayfulBadge variant="magic" size="md">
                 Choose from here
               </PlayfulBadge>
             </div>
@@ -235,7 +235,7 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
           {/* Right Column */}
           <div className="space-y-3">
             <div className="text-center mb-4">
-              <PlayfulBadge variant="sunshine" size="default">
+              <PlayfulBadge variant="achievement" size="md">
                 Match it here
               </PlayfulBadge>
             </div>
