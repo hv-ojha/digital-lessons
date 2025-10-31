@@ -96,17 +96,24 @@ export async function updateLessonStatus(
 export async function updateLessonWithContent(
   id: string,
   title: string,
-  content: string
+  content: string,
+  lessonType?: string,
+  isJson?: boolean
 ): Promise<void> {
   const supabase = await createClient();
 
+  const updateData: Partial<Lesson> = {
+    title,
+    content,
+    status: 'completed' as LessonStatus,
+  };
+
+  if (lessonType !== undefined) updateData.lesson_type = lessonType;
+  if (isJson !== undefined) updateData.is_json = isJson;
+
   const { error } = await supabase
     .from('lessons')
-    .update({
-      title,
-      content,
-      status: 'completed' as LessonStatus,
-    })
+    .update(updateData)
     .eq('id', id);
 
   if (error) {

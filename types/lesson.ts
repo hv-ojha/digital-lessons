@@ -9,6 +9,8 @@ export interface Lesson {
   error_message: string | null;
   created_at: string;
   updated_at: string;
+  lesson_type?: string | null; // 'quiz', 'flashcard', 'math', 'reading', 'interactive', 'matching'
+  is_json?: boolean; // true for new JSON-based lessons, false/null for old code-based lessons
 }
 
 export interface CreateLessonRequest {
@@ -26,4 +28,9 @@ export interface LessonGenerationResult {
   title: string;
   content?: string;
   error?: string;
+  metadata?: {
+    lessonType?: string;
+    approach?: string;
+    generatedAt?: string;
+  };
 }
