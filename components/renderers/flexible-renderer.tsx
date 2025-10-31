@@ -3,6 +3,8 @@
 import { FlexibleLesson, ContentBlock } from '@/types/lesson-content-v2';
 import { LessonHeader } from './lesson-header';
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface FlexibleRendererProps {
   lesson: FlexibleLesson;
@@ -22,16 +24,18 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
     switch (block.type) {
       case 'text':
         const textStyles = {
-          paragraph: 'text-base md:text-lg leading-relaxed text-foreground',
+          paragraph: 'text-base md:text-lg leading-relaxed text-foreground prose prose-slate dark:prose-invert max-w-none',
           heading: 'text-3xl md:text-4xl font-bold text-foreground mb-4',
           subheading: 'text-2xl md:text-3xl font-semibold text-foreground mb-3',
-          highlight: 'text-lg md:text-xl font-medium text-accent bg-accent/10 p-4 rounded-lg',
-          quote: 'text-lg md:text-xl italic text-muted-foreground border-l-4 border-accent pl-6 py-2',
+          highlight: 'text-lg md:text-xl font-medium text-accent bg-accent/10 p-4 rounded-lg prose prose-slate dark:prose-invert max-w-none',
+          quote: 'text-lg md:text-xl italic text-muted-foreground border-l-4 border-accent pl-6 py-2 prose prose-slate dark:prose-invert max-w-none',
         };
         return (
-          <p key={index} className={textStyles[block.style || 'paragraph']}>
-            {block.content}
-          </p>
+          <div key={index} className={textStyles[block.style || 'paragraph']}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {block.content}
+            </ReactMarkdown>
+          </div>
         );
 
       case 'visual':
@@ -105,7 +109,11 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
             {block.title && (
               <p className="text-lg font-semibold text-accent">{block.title}</p>
             )}
-            <p className="text-foreground">{block.content}</p>
+            <div className="text-foreground prose prose-slate dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {block.content}
+              </ReactMarkdown>
+            </div>
             {block.highlight && (
               <p className="text-sm font-medium text-accent bg-accent/10 p-3 rounded-lg">
                 💡 {block.highlight}
@@ -118,7 +126,11 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
         return (
           <div key={index} className="bg-primary/5 border border-primary/20 rounded-xl p-6 space-y-4">
             <p className="text-lg font-semibold text-primary">🎯 Activity</p>
-            <p className="text-foreground">{block.instruction}</p>
+            <div className="text-foreground prose prose-slate dark:prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {block.instruction}
+              </ReactMarkdown>
+            </div>
 
             {block.steps && block.steps.length > 0 && (
               <ol className="list-decimal list-inside space-y-2 ml-2">
