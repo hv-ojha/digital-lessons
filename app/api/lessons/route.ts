@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLesson, getAllLessons } from '@/lib/db/lessons-server';
-import { inngest } from '@/lib/inngest/client';
+import { generateLessonContent, getGenerationMode } from '@/lib/lesson-generation-service';
+import { logExecutionMode } from '@/lib/execution-mode';
 import { z } from 'zod';
 
 // Schema for request validation
@@ -42,31 +43,57 @@ export async function POST(request: NextRequest) {
 
     const { outline } = validationResult.data;
 
+    // Log execution mode configuration
+    logExecutionMode();
+
     // Generate a temporary title
     const tempTitle = `Lesson: ${outline.slice(0, 40)}...`;
 
     // Create lesson in database with 'generating' status
     const lesson = await createLesson(tempTitle, outline);
 
-    // Trigger Inngest background job for lesson generation
-    // This returns immediately - Inngest handles the background processing
-    await inngest.send({
-      name: 'lesson/generate.requested',
-      data: {
-        lessonId: lesson.id,
-        outline: outline,
-      },
-    });
+    console.log(`\n📝 [API] Created lesson ${lesson.id}`);
+    console.log(`   Outline: "${outline}"`);
+    console.log(`   Mode: ${getGenerationMode()}`);
 
-    console.log(`✅ Lesson ${lesson.id} queued for generation via Inngest`);
+    // Generate lesson content (auto-detects sync vs async based on environment)
+    const result = await generateLessonContent(lesson.id, outline);
 
-    // Return immediately - frontend will poll or receive real-time updates via Supabase
-    return NextResponse.json({
-      id: lesson.id,
-      title: lesson.title,
-      status: lesson.status,
-      message: 'Lesson queued for generation',
-    }, { status: 201 });
+    if (result.mode === 'async') {
+      // Async mode (production): Return immediately, Inngest handles generation
+      console.log(`✅ [API] Lesson ${lesson.id} queued for background generation\n`);
+
+      return NextResponse.json({
+        id: lesson.id,
+        title: lesson.title,
+        status: lesson.status,
+        message: 'Lesson queued for generation',
+        mode: 'async',
+      }, { status: 201 });
+    } else {
+      // Sync mode (local): Generation completed, return result
+      if (result.success) {
+        console.log(`✅ [API] Lesson ${lesson.id} generated successfully\n`);
+
+        return NextResponse.json({
+          id: lesson.id,
+          title: lesson.title,
+          status: 'completed',
+          message: 'Lesson generated successfully',
+          mode: 'sync',
+        }, { status: 201 });
+      } else {
+        console.error(`❌ [API] Lesson ${lesson.id} generation failed\n`);
+
+        return NextResponse.json({
+          id: lesson.id,
+          title: lesson.title,
+          status: 'failed',
+          message: 'Lesson generation failed',
+          mode: 'sync',
+        }, { status: 201 }); // Still 201 since lesson was created, just failed to generate
+      }
+    }
 
   } catch (error) {
     console.error('Error creating lesson:', error);

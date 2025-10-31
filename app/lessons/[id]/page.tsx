@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getLesson } from '@/lib/db/lessons-server';
-import { LessonRenderer } from '@/components/lesson-renderer';
+import { JsonLessonRenderer } from '@/components/json-lesson-renderer';
+import { validateLessonContent } from '@/types/lesson-content';
+import { validateFlexibleLesson } from '@/types/lesson-content-v2';
 
 export default async function LessonPage({
   params,
@@ -78,5 +80,47 @@ export default async function LessonPage({
     );
   }
 
-  return <LessonRenderer code={lesson.content} title={lesson.title} />;
+  // Parse and render JSON-based lesson
+  try {
+    const parsedContent = JSON.parse(lesson.content);
+
+    // Try flexible validation first (v2)
+    const flexibleValidation = validateFlexibleLesson(parsedContent);
+    if (flexibleValidation.isValid && flexibleValidation.data) {
+      return <JsonLessonRenderer content={flexibleValidation.data} title={lesson.title} />;
+    }
+
+    // Fallback to standard validation (v1)
+    const validation = validateLessonContent(parsedContent);
+    if (validation.isValid && validation.data) {
+      return <JsonLessonRenderer content={validation.data} title={lesson.title} />;
+    }
+
+    // Both validations failed - show error
+    console.error('Invalid lesson JSON (v1):', validation.error);
+    console.error('Invalid lesson JSON (v2):', flexibleValidation.error);
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="card-elevated text-center max-w-2xl">
+          <h1 className="text-heading-2 mb-4">Invalid Lesson Data</h1>
+          <p className="text-body text-muted-foreground">
+            This lesson could not be displayed due to invalid data.
+          </p>
+        </div>
+      </div>
+    );
+  } catch (error) {
+    // JSON parsing failed
+    console.error('Failed to parse lesson JSON:', error);
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="card-elevated text-center max-w-2xl">
+          <h1 className="text-heading-2 mb-4">Error Loading Lesson</h1>
+          <p className="text-body text-muted-foreground">
+            This lesson could not be displayed due to a parsing error.
+          </p>
+        </div>
+      </div>
+    );
+  }
 }

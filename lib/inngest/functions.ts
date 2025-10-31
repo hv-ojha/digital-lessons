@@ -9,10 +9,12 @@
  * - Automatic retries on failure
  * - Full observability in Inngest dashboard
  * - LangSmith tracing still works!
+ *
+ * Uses JSON-based generation with flexible content blocks for optimal token usage.
  */
 
 import { inngest } from './client';
-import { generateLesson } from '@/lib/ai/generator';
+import { generateLessonJson } from '@/lib/ai/generator-json';
 import { updateLessonStatus, updateLessonWithContent } from '@/lib/db/lessons-server';
 
 /**
@@ -60,6 +62,7 @@ export const generateLessonFunction = inngest.createFunction(
 
     console.log(`\n🤖 [INNGEST] AI Configuration:`, {
       provider: process.env.AI_PROVIDER || 'gemini',
+      generatorType: 'JSON with flexible content (95% token savings - always enabled)',
       imageGeneration: process.env.ENABLE_IMAGE_GENERATION === 'true' ? 'enabled' : 'disabled',
       environment: process.env.NODE_ENV || 'development',
       deployment: process.env.VERCEL_ENV || 'local',
@@ -69,10 +72,12 @@ export const generateLessonFunction = inngest.createFunction(
     // LangSmith will trace all AI calls here!
     const result = await step.run('generate-ai-content', async () => {
       console.log(`🤖 [INNGEST] Calling AI to generate lesson...`);
+      console.log(`   Generator: JSON-based with flexible content`);
       console.log(`   This will create a trace tree in LangSmith:`);
 
       try {
-        const generationResult = await generateLesson(outline);
+        // Use JSON generator with flexible content
+        const generationResult = await generateLessonJson(outline);
 
         console.log(`\n✅ [INNGEST] AI generation completed:`, {
           success: generationResult.success,
@@ -84,36 +89,33 @@ export const generateLessonFunction = inngest.createFunction(
 
         // Log content quality metrics
         if (generationResult.content) {
-          const lines = generationResult.content.split('\n').length;
-          const hasState = generationResult.content.includes('useState');
-          const hasEffects = generationResult.content.includes('useEffect');
-          const componentCount = (generationResult.content.match(/function \w+/g) || []).length;
+          const contentSize = generationResult.content.length;
+          const estimatedTokens = Math.ceil(contentSize / 4);
 
-          console.log(`📊 [INNGEST] Generated code metrics:`, {
-            lines,
-            components: componentCount,
-            usesState: hasState,
-            usesEffects: hasEffects,
-            estimatedComplexity: lines > 100 ? 'high' : lines > 50 ? 'medium' : 'low',
+          console.log(`📊 [INNGEST] Generated content metrics:`, {
+            contentSize,
+            estimatedTokens,
+            lessonType: generationResult.metadata?.lessonType || 'flexible',
+            format: generationResult.metadata?.format || 'unknown',
           });
         }
 
         if (langsmithEnabled) {
           console.log(`\n🔍 [INNGEST] LangSmith trace created with rich metadata:`);
-          console.log(`   generate_lesson (chain) - Full workflow orchestration`);
-          console.log(`   ├─ Metadata: content_type, difficulty, age_level, complexity_score, feature flags`);
-          console.log(`   ├─ Tags: lesson-generation, full-workflow, provider, environment`);
+          console.log(`   generate_lesson_json (chain) - Full workflow orchestration`);
+          console.log(`   ├─ Metadata: content_type, lesson_type, format, token_optimization`);
+          console.log(`   ├─ Tags: json-lesson-generation, full-workflow, provider, environment`);
           console.log(`   │`);
           console.log(`   ├─ generate_lesson_title (llm) - Title generation`);
           console.log(`   │  ├─ Metadata: temperature=0.7, outline analysis`);
           console.log(`   │  └─ Tags: title-generation, lesson-creation, provider, environment`);
           console.log(`   │`);
-          console.log(`   └─ generate_lesson_code (llm) - Code generation with retries`);
-          console.log(`      ├─ Metadata: temperature=0.3, retry tracking, feature detection`);
-          console.log(`      └─ Tags: code-generation, lesson-creation, provider, environment`);
+          console.log(`   └─ generate_lesson_json (llm) - JSON generation with retries`);
+          console.log(`      ├─ Metadata: temperature=0.3, retry tracking, format detection`);
+          console.log(`      └─ Tags: json-generation, lesson-creation, provider, environment`);
           console.log(`\n   🌐 View detailed traces at: https://smith.langchain.com/projects/${process.env.LANGSMITH_PROJECT || 'default'}`);
-          console.log(`   💡 Metadata filters: metadata.retry_count > 0, metadata.content_type = "quiz"`);
-          console.log(`   💡 Tag filters: tag:code-generation, tag:lesson-generation`);
+          console.log(`   💡 Metadata filters: metadata.retry_count > 0, metadata.lesson_type = "flexible"`);
+          console.log(`   💡 Tag filters: tag:json-generation, tag:lesson-generation`);
         }
 
         return generationResult;
@@ -130,10 +132,21 @@ export const generateLessonFunction = inngest.createFunction(
       try {
         if (result.success && result.content && result.title) {
           // Update both title and content in database
-          await updateLessonWithContent(lessonId, result.title, result.content);
+          // Include lesson type and JSON flag if available
+          await updateLessonWithContent(
+            lessonId,
+            result.title,
+            result.content,
+            result.metadata?.lessonType,
+            true // Always JSON-based now
+          );
           console.log(`✅ [INNGEST] Database updated successfully`);
           console.log(`   Title: "${result.title}"`);
           console.log(`   Content length: ${result.content.length} chars`);
+          if (result.metadata?.lessonType) {
+            console.log(`   Lesson type: ${result.metadata.lessonType}`);
+          }
+          console.log(`   Format: JSON with flexible content`);
         } else {
           const errorMessage = result.error || 'Generation failed';
           await updateLessonStatus(lessonId, 'failed', undefined, errorMessage);
