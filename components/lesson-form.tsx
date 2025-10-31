@@ -38,33 +38,33 @@ export function LessonForm({ onLessonCreated }: LessonFormProps) {
         throw new Error('Failed to create lesson');
       }
 
-      // Clear form
+      // Clear form and stop loading immediately after lesson is created in DB
       setOutline('');
+      setIsGenerating(false);
 
       // Notify parent component
       onLessonCreated();
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
       setIsGenerating(false);
     }
   };
 
-  // Show generating state with Sparky
+  // Show generating state with Sparky in center
   if (isGenerating) {
     return (
-      <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-12 text-center animate-bounce-in">
+      <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-8 md:p-12 text-center animate-bounce-in">
         <SparklyMascot mood="thinking" size="xl" animate />
-        <h2 className="font-display text-3xl font-bold gradient-text-magic mt-6 mb-4">
+        <h2 className="font-display text-3xl md:text-4xl font-bold gradient-text-magic mt-6 mb-4">
           Sparky is Creating Your Lesson!
         </h2>
-        <p className="text-lg text-gray-600 mb-8 max-w-md mx-auto">
+        <p className="text-lg text-gray-700 mb-8 max-w-md mx-auto">
           Hold tight! Your personalized learning adventure is being crafted just for you...
         </p>
-        <div className="flex items-center justify-center gap-2 text-blue-600">
+        <div className="flex items-center justify-center gap-2 text-purple-600">
           <Loader2 className="w-6 h-6 animate-spin" />
-          <span className="font-semibold">This usually takes 30-60 seconds</span>
+          <span className="font-semibold">Adding to your lessons...</span>
         </div>
       </div>
     );
@@ -99,7 +99,7 @@ export function LessonForm({ onLessonCreated }: LessonFormProps) {
               value={outline}
               onChange={(e) => setOutline(e.target.value)}
               placeholder="Example: A 10 question pop quiz on Florida's history and geography"
-              className="w-full px-6 py-5 text-lg bg-white border-3 border-purple-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-200 min-h-[160px] resize-none placeholder:text-gray-400 shadow-inner font-body"
+              className="w-full px-6 py-5 text-lg text-gray-900 bg-white border-3 border-purple-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-200 min-h-[160px] resize-none placeholder:text-gray-400 shadow-inner font-body"
               disabled={isGenerating}
               maxLength={500}
             />

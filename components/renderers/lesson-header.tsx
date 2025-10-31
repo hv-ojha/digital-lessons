@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Sparkles, Star } from 'lucide-react';
-import { PlayfulProgress } from '@/components/ui/playful-progress';
 import { Button } from '@/components/ui/button';
 
 interface LessonHeaderProps {
@@ -22,35 +21,24 @@ export function LessonHeader({ title, description, progress, score }: LessonHead
     router.push('/');
   };
 
-  // Determine Sparky's mood based on progress
-  const getProgressPercentage = () => {
-    if (!progress) return 0;
-    return Math.round((progress.current / progress.total) * 100);
-  };
-
-  const progressPercentage = getProgressPercentage();
   const isComplete = progress && progress.current === progress.total;
 
   return (
-    <div className="relative bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-3xl shadow-playful-lg p-6 md:p-8 overflow-hidden animate-slide-in-up">
-      {/* Decorative Background Elements */}
-      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-yellow-200/30 to-pink-200/30 rounded-full blur-3xl -z-0" />
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-200/30 to-purple-200/30 rounded-full blur-3xl -z-0" />
-
-      <div className="relative z-10">
+    <div className="bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-3xl shadow-playful-lg p-6 md:p-8 animate-slide-in-up">
+      <div className="flex flex-col gap-4">
         {/* Back Button */}
         <Button
           onClick={handleBack}
           variant="outline"
           size="default"
-          className="mb-4 bg-white/80 border-2 border-purple-300 text-purple-700 hover:bg-white hover:border-purple-500 transition-all duration-200 hover:-translate-x-1 font-semibold shadow-sm"
+          className="self-start bg-white/80 border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-500 hover:text-purple-800 transition-all duration-200 hover:-translate-x-1 font-semibold shadow-sm"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to Lessons
         </Button>
 
         {/* Title with Sparky */}
-        <div className="flex items-start gap-4 mb-4">
+        <div className="flex items-start gap-4">
           {/* Sparky Mascot */}
           <div className="flex-shrink-0">
             <svg
@@ -112,38 +100,35 @@ export function LessonHeader({ title, description, progress, score }: LessonHead
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress Info */}
         {progress && (
-          <div className="mb-4">
-            <PlayfulProgress
-              value={progressPercentage}
-              showStars
-              className="h-4"
-            />
-            <div className="flex items-center justify-between mt-2">
-              <p className="text-sm font-semibold text-gray-700 flex items-center gap-1">
-                <Sparkles className="w-4 h-4 text-purple-600" />
+          <div className="flex items-center justify-between bg-white/60 backdrop-blur-sm rounded-2xl px-6 py-4 border-2 border-purple-200">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              <p className="text-base font-bold text-gray-800">
                 {isComplete ? (
                   <span className="gradient-text-success">Complete! 🎉</span>
                 ) : (
-                  `Progress: ${progress.current} of ${progress.total}`
+                  `${progress.current} of ${progress.total} answered`
                 )}
               </p>
-              {score !== undefined && (
-                <p className="text-sm font-bold text-purple-700 flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                  Score: {score}
-                </p>
-              )}
             </div>
+            {score !== undefined && (
+              <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-400 px-4 py-2 rounded-full">
+                <Star className="w-5 h-5 text-gray-900 fill-gray-900" />
+                <p className="text-base font-bold text-gray-900">
+                  {score} points
+                </p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Score Badge (if no progress) */}
         {!progress && score !== undefined && (
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 px-4 py-2 rounded-full font-bold shadow-md">
+          <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 px-4 py-2 rounded-full font-bold shadow-md self-start">
             <Star className="w-5 h-5 fill-gray-900" />
-            Score: {score}
+            <span>Score: {score}</span>
           </div>
         )}
       </div>

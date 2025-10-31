@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLesson, updateLessonStatus } from '@/lib/db/lessons-server';
-import { inngest } from '@/lib/inngest/client';
+import { generateLessonContent, getGenerationMode } from '@/lib/lesson-generation-service';
+import { logExecutionMode } from '@/lib/execution-mode';
 
 /**
  * POST /api/lessons/[id]/retry - Retry generating a failed lesson
@@ -30,25 +31,51 @@ export async function POST(
       );
     }
 
+    // Log execution mode configuration
+    logExecutionMode();
+
     // Update status back to generating
     await updateLessonStatus(id, 'generating');
 
-    // Trigger Inngest background job for retry
-    await inngest.send({
-      name: 'lesson/generate.requested',
-      data: {
-        lessonId: id,
-        outline: lesson.outline,
-      },
-    });
+    console.log(`\n🔄 [API] Retrying lesson ${id}`);
+    console.log(`   Outline: "${lesson.outline}"`);
+    console.log(`   Mode: ${getGenerationMode()}`);
 
-    console.log(`✅ Lesson ${id} retry queued via Inngest`);
+    // Generate lesson content (auto-detects sync vs async based on environment)
+    const result = await generateLessonContent(id, lesson.outline);
 
-    return NextResponse.json({
-      id: id,
-      status: 'generating',
-      message: 'Lesson retry queued for generation',
-    });
+    if (result.mode === 'async') {
+      // Async mode (production): Return immediately, Inngest handles generation
+      console.log(`✅ [API] Lesson ${id} retry queued for background generation\n`);
+
+      return NextResponse.json({
+        id: id,
+        status: 'generating',
+        message: 'Lesson retry queued for generation',
+        mode: 'async',
+      });
+    } else {
+      // Sync mode (local): Generation completed, return result
+      if (result.success) {
+        console.log(`✅ [API] Lesson ${id} retry generated successfully\n`);
+
+        return NextResponse.json({
+          id: id,
+          status: 'completed',
+          message: 'Lesson retry generated successfully',
+          mode: 'sync',
+        });
+      } else {
+        console.error(`❌ [API] Lesson ${id} retry generation failed\n`);
+
+        return NextResponse.json({
+          id: id,
+          status: 'failed',
+          message: 'Lesson retry generation failed',
+          mode: 'sync',
+        });
+      }
+    }
 
   } catch (error) {
     console.error('Error retrying lesson:', error);
