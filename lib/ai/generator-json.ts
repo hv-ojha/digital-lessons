@@ -123,7 +123,7 @@ const generateLessonContent = traceable(
     if (retryCount === 0) {
       userPrompt = getCreativeUserPrompt(outline, title);
     } else {
-      userPrompt = getCreativeRetryPrompt(outline, title, previousError!, previousJson);
+      userPrompt = getCreativeRetryPrompt(outline, title, previousError!);
     }
 
     console.log(`🔄 Calling AI model...`);

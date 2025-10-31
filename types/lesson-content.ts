@@ -202,7 +202,7 @@ export function validateLessonContent(json: unknown): {
     if (error instanceof z.ZodError) {
       return {
         isValid: false,
-        error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
+        error: error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
       };
     }
     return {

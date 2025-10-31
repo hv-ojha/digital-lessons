@@ -96,7 +96,7 @@ export const generateLessonFunction = inngest.createFunction(
             contentSize,
             estimatedTokens,
             lessonType: generationResult.metadata?.lessonType || 'flexible',
-            format: generationResult.metadata?.format || 'unknown',
+            approach: generationResult.metadata?.approach || 'json-structured',
           });
         }
 
