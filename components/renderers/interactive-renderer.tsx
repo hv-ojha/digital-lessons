@@ -81,7 +81,7 @@ export function InteractiveRenderer({ lesson }: InteractiveRendererProps) {
             })}
           </div>
 
-          {showFeedback && (
+          {showFeedback && currentStep.feedback && (
             <div className={`p-6 rounded-xl ${
               isCorrect ? 'bg-success/10 border border-success/20' : 'bg-warning/10 border border-warning/20'
             }`}>
