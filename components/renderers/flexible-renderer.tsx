@@ -24,11 +24,11 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
     switch (block.type) {
       case 'text':
         const textStyles = {
-          paragraph: 'text-base md:text-lg leading-relaxed text-foreground prose prose-slate dark:prose-invert max-w-none',
-          heading: 'text-3xl md:text-4xl font-bold text-foreground mb-4',
-          subheading: 'text-2xl md:text-3xl font-semibold text-foreground mb-3',
-          highlight: 'text-lg md:text-xl font-medium text-accent bg-accent/10 p-4 rounded-lg prose prose-slate dark:prose-invert max-w-none',
-          quote: 'text-lg md:text-xl italic text-muted-foreground border-l-4 border-accent pl-6 py-2 prose prose-slate dark:prose-invert max-w-none',
+          paragraph: 'text-base md:text-lg leading-relaxed text-gray-800 font-body prose prose-slate max-w-none bg-gradient-to-r from-blue-50/50 to-purple-50/50 p-4 rounded-xl',
+          heading: 'font-display text-3xl md:text-4xl font-bold gradient-text-magic mb-4',
+          subheading: 'font-display text-2xl md:text-3xl font-semibold text-purple-700 mb-3 bg-gradient-to-r from-purple-100/50 to-pink-100/50 p-3 rounded-xl',
+          highlight: 'text-lg md:text-xl font-medium text-purple-900 bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-2xl border-2 border-yellow-300 prose prose-slate max-w-none shadow-md',
+          quote: 'text-lg md:text-xl italic text-purple-800 border-l-4 border-purple-500 pl-6 py-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-r-xl prose prose-slate max-w-none shadow-sm',
         };
         return (
           <div key={index} className={textStyles[block.style || 'paragraph']}>
@@ -40,11 +40,11 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
 
       case 'visual':
         return (
-          <div key={index} className="flex flex-col items-center gap-3">
+          <div key={index} className="flex flex-col items-center gap-3 animate-fade-in">
             {block.svg ? (
               // Render inline SVG
               <div
-                className="w-full max-w-md rounded-lg shadow-md bg-white dark:bg-slate-900 p-4"
+                className="w-full max-w-md rounded-2xl shadow-playful bg-white p-4"
                 dangerouslySetInnerHTML={{ __html: block.svg }}
               />
             ) : block.image ? (
@@ -52,16 +52,16 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
               <img
                 src={block.image.src}
                 alt={block.image.alt}
-                className="w-full max-w-md rounded-lg shadow-md"
+                className="w-full max-w-md rounded-2xl shadow-playful"
               />
             ) : (
               // Fallback: show description only
-              <div className="w-full max-w-md h-64 bg-accent/10 rounded-lg flex items-center justify-center">
-                <p className="text-muted-foreground text-center p-6">{block.description}</p>
+              <div className="w-full max-w-md h-64 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center border-2 border-purple-300">
+                <p className="text-purple-800 text-center p-6 font-body">{block.description}</p>
               </div>
             )}
             {block.caption && (
-              <p className="text-sm text-muted-foreground text-center">{block.caption}</p>
+              <p className="text-sm text-gray-600 text-center font-body">{block.caption}</p>
             )}
           </div>
         );
@@ -71,11 +71,11 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
         const isCorrect = block.correctIndex !== undefined && userAnswer === block.correctIndex;
 
         return (
-          <div key={index} className="bg-card border border-border/50 rounded-xl p-6 space-y-4">
-            <p className="text-lg font-semibold text-foreground">{block.question}</p>
+          <div key={index} className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-300 rounded-2xl p-6 space-y-4 shadow-playful">
+            <p className="text-lg font-bold text-purple-800 font-display">{block.question}</p>
 
             {block.options && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {block.options.map((option, optIdx) => {
                   const isSelected = userAnswer === optIdx;
                   const showCorrect = showResults && optIdx === block.correctIndex;
@@ -86,15 +86,15 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
                       key={optIdx}
                       onClick={() => handleQuestionAnswer(index, optIdx)}
                       disabled={showResults}
-                      className={`w-full px-4 py-3 rounded-lg text-left transition-all duration-200 ${
+                      className={`w-full px-4 py-3 rounded-xl text-left transition-all duration-200 font-body transform hover:scale-105 ${
                         showCorrect
-                          ? 'bg-success/20 border-2 border-success text-success'
+                          ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white border-2 border-green-600 scale-110 shadow-playful-lg'
                           : showIncorrect
-                          ? 'bg-destructive/20 border-2 border-destructive text-destructive'
+                          ? 'bg-gradient-to-br from-red-400 to-red-500 text-white border-2 border-red-600 animate-wiggle'
                           : isSelected
-                          ? 'bg-accent/20 border-2 border-accent'
-                          : 'bg-card border-2 border-border hover:border-accent/50'
-                      }`}
+                          ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white border-2 border-purple-600 shadow-lg scale-105'
+                          : 'bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-gray-300 text-gray-800 hover:bg-gradient-to-br hover:from-blue-100 hover:to-purple-100 hover:border-blue-400 hover:shadow-md'
+                      } ${showResults ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                     >
                       {option}
                     </button>
@@ -104,8 +104,8 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
             )}
 
             {showResults && block.explanation && (
-              <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
-                <p className="text-sm text-foreground">{block.explanation}</p>
+              <div className="bg-gradient-to-r from-blue-100 to-purple-100 border-2 border-blue-300 rounded-xl p-4 animate-bounce-in">
+                <p className="text-sm text-blue-900 font-body font-semibold">{block.explanation}</p>
               </div>
             )}
           </div>
@@ -113,17 +113,17 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
 
       case 'example':
         return (
-          <div key={index} className="bg-accent/5 border border-accent/20 rounded-xl p-6 space-y-3">
+          <div key={index} className="bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-300 rounded-2xl p-6 space-y-3 shadow-playful">
             {block.title && (
-              <p className="text-lg font-semibold text-accent">{block.title}</p>
+              <p className="text-lg font-bold text-green-800 font-display">{block.title}</p>
             )}
-            <div className="text-foreground prose prose-slate dark:prose-invert max-w-none">
+            <div className="text-gray-800 font-body prose prose-slate max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {block.content}
               </ReactMarkdown>
             </div>
             {block.highlight && (
-              <p className="text-sm font-medium text-accent bg-accent/10 p-3 rounded-lg">
+              <p className="text-sm font-medium text-green-900 bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-300">
                 💡 {block.highlight}
               </p>
             )}
@@ -132,9 +132,9 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
 
       case 'activity':
         return (
-          <div key={index} className="bg-primary/5 border border-primary/20 rounded-xl p-6 space-y-4">
-            <p className="text-lg font-semibold text-primary">🎯 Activity</p>
-            <div className="text-foreground prose prose-slate dark:prose-invert max-w-none">
+          <div key={index} className="bg-gradient-to-r from-orange-100 to-yellow-100 border-2 border-orange-300 rounded-2xl p-6 space-y-4 shadow-playful">
+            <p className="text-lg font-bold text-orange-800 font-display">🎯 Activity</p>
+            <div className="text-gray-800 font-body prose prose-slate max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {block.instruction}
               </ReactMarkdown>
@@ -143,37 +143,37 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
             {block.steps && block.steps.length > 0 && (
               <ol className="list-decimal list-inside space-y-2 ml-2">
                 {block.steps.map((step, idx) => (
-                  <li key={idx} className="text-foreground">{step}</li>
+                  <li key={idx} className="text-gray-800 font-body">{step}</li>
                 ))}
               </ol>
             )}
 
             {block.materials && block.materials.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground mb-2">Materials needed:</p>
+                <p className="text-sm font-bold text-orange-700 mb-2 font-display">Materials needed:</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
                   {block.materials.map((item, idx) => (
-                    <li key={idx} className="text-sm text-muted-foreground">{item}</li>
+                    <li key={idx} className="text-sm text-gray-700 font-body">{item}</li>
                   ))}
                 </ul>
               </div>
             )}
 
             {block.tip && (
-              <p className="text-sm text-primary/80 italic">Tip: {block.tip}</p>
+              <p className="text-sm text-orange-700 italic font-body">Tip: {block.tip}</p>
             )}
           </div>
         );
 
       case 'takeaway':
         return (
-          <div key={index} className="bg-success/5 border border-success/20 rounded-xl p-6 space-y-3">
-            <p className="text-lg font-semibold text-success">✨ Key Takeaways</p>
+          <div key={index} className="bg-gradient-to-r from-green-100 to-teal-100 border-2 border-green-300 rounded-2xl p-6 space-y-3 shadow-playful">
+            <p className="text-lg font-bold text-green-800 font-display">✨ Key Takeaways</p>
             <ul className="space-y-2">
               {block.points.map((point, idx) => (
                 <li key={idx} className="flex items-start gap-3">
-                  <span className="text-success flex-shrink-0">✓</span>
-                  <span className="text-foreground">{point}</span>
+                  <span className="text-green-700 flex-shrink-0 text-xl">✓</span>
+                  <span className="text-gray-800 font-body">{point}</span>
                 </li>
               ))}
             </ul>
@@ -182,18 +182,18 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
 
       case 'story':
         return (
-          <div key={index} className="bg-gradient-to-br from-accent/5 to-primary/5 border border-accent/20 rounded-xl p-6 space-y-4">
+          <div key={index} className="bg-gradient-to-br from-pink-100 to-purple-100 border-2 border-pink-300 rounded-2xl p-6 space-y-4 shadow-playful">
             {block.character && (
-              <p className="text-sm font-medium text-accent">📖 {block.character}'s Story</p>
+              <p className="text-sm font-bold text-pink-800 font-display">📖 {block.character}'s Story</p>
             )}
-            <p className="text-base md:text-lg leading-relaxed text-foreground italic">
+            <p className="text-base md:text-lg leading-relaxed text-gray-800 italic font-body">
               {block.narrative}
             </p>
             {block.image && (
               <img
                 src={block.image.src}
                 alt={block.image.alt}
-                className="w-full max-w-sm rounded-lg shadow-md mx-auto"
+                className="w-full max-w-sm rounded-2xl shadow-playful mx-auto"
               />
             )}
           </div>
@@ -201,23 +201,23 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
 
       case 'callout':
         const calloutStyles = {
-          tip: { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary', icon: '💡' },
-          warning: { bg: 'bg-warning/10', border: 'border-warning/30', text: 'text-warning', icon: '⚠️' },
-          'fun-fact': { bg: 'bg-accent/10', border: 'border-accent/30', text: 'text-accent', icon: '🎉' },
-          remember: { bg: 'bg-success/10', border: 'border-success/30', text: 'text-success', icon: '📌' },
-          'try-it': { bg: 'bg-primary/10', border: 'border-primary/30', text: 'text-primary', icon: '🚀' },
+          tip: { bg: 'bg-gradient-to-r from-blue-100 to-cyan-100', border: 'border-blue-300', text: 'text-blue-800', icon: '💡' },
+          warning: { bg: 'bg-gradient-to-r from-red-100 to-orange-100', border: 'border-red-300', text: 'text-red-800', icon: '⚠️' },
+          'fun-fact': { bg: 'bg-gradient-to-r from-yellow-100 to-orange-100', border: 'border-yellow-300', text: 'text-yellow-800', icon: '🎉' },
+          remember: { bg: 'bg-gradient-to-r from-green-100 to-emerald-100', border: 'border-green-300', text: 'text-green-800', icon: '📌' },
+          'try-it': { bg: 'bg-gradient-to-r from-purple-100 to-pink-100', border: 'border-purple-300', text: 'text-purple-800', icon: '🚀' },
         };
         const style = calloutStyles[block.variant];
 
         return (
-          <div key={index} className={`${style.bg} border ${style.border} rounded-xl p-4 space-y-2`}>
+          <div key={index} className={`${style.bg} border-2 ${style.border} rounded-2xl p-4 space-y-2 shadow-playful`}>
             <div className="flex items-center gap-2">
-              <span>{style.icon}</span>
+              <span className="text-xl">{style.icon}</span>
               {block.title && (
-                <p className={`font-semibold ${style.text}`}>{block.title}</p>
+                <p className={`font-bold ${style.text} font-display`}>{block.title}</p>
               )}
             </div>
-            <p className="text-foreground">{block.content}</p>
+            <p className="text-gray-800 font-body">{block.content}</p>
           </div>
         );
 
@@ -234,7 +234,7 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
   const canShowResults = questionAnswers.size > 0;
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <LessonHeader
@@ -244,9 +244,9 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
 
         {/* Content Sections */}
         {lesson.sections.map((section, sectionIdx) => (
-          <div key={sectionIdx} className="bg-card border border-border/50 rounded-2xl shadow-lg p-6 md:p-8 space-y-6">
+          <div key={sectionIdx} className="bg-gradient-to-br from-blue-50/80 via-purple-50/80 to-pink-50/80 backdrop-blur-sm rounded-3xl shadow-playful-lg p-6 md:p-8 space-y-6 animate-slide-in-up border-2 border-purple-200/50" style={{ animationDelay: `${sectionIdx * 0.1}s` }}>
             {section.heading && (
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+              <h2 className="font-display text-3xl md:text-4xl font-bold gradient-text-magic">
                 {section.heading}
               </h2>
             )}
@@ -261,10 +261,10 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
 
         {/* Show Results Button */}
         {totalQuestions > 0 && !showResults && canShowResults && (
-          <div className="text-center">
+          <div className="text-center animate-bounce-in">
             <button
               onClick={() => setShowResults(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md px-8 py-4 transition-all duration-200 font-semibold text-lg"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-2xl shadow-playful px-8 py-4 transition-all duration-200 font-bold text-lg hover:scale-105 hover:shadow-playful-lg"
             >
               Check Answers ({questionAnswers.size} / {totalQuestions})
             </button>
@@ -273,22 +273,22 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
 
         {/* Conclusion */}
         {lesson.conclusion && (
-          <div className="bg-card border border-border/50 rounded-2xl shadow-lg p-6 md:p-8 space-y-4">
+          <div className="bg-gradient-to-br from-green-50/80 via-emerald-50/80 to-teal-50/80 backdrop-blur-sm rounded-3xl shadow-playful-lg p-6 md:p-8 space-y-4 animate-bounce-in border-2 border-green-200/50">
             {lesson.conclusion.summary && (
               <div>
-                <h3 className="text-2xl font-bold text-foreground mb-3">Summary</h3>
-                <p className="text-lg text-foreground">{lesson.conclusion.summary}</p>
+                <h3 className="font-display text-2xl font-bold gradient-text-success mb-3">Summary</h3>
+                <p className="text-lg text-gray-800 font-body leading-relaxed">{lesson.conclusion.summary}</p>
               </div>
             )}
 
             {lesson.conclusion.nextSteps && lesson.conclusion.nextSteps.length > 0 && (
               <div>
-                <h3 className="text-2xl font-bold text-foreground mb-3">What's Next?</h3>
+                <h3 className="font-display text-2xl font-bold gradient-text-magic mb-3">What's Next?</h3>
                 <ul className="space-y-2">
                   {lesson.conclusion.nextSteps.map((step, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <span className="text-accent flex-shrink-0">→</span>
-                      <span className="text-foreground">{step}</span>
+                      <span className="text-purple-600 flex-shrink-0 text-xl">→</span>
+                      <span className="text-gray-800 font-body">{step}</span>
                     </li>
                   ))}
                 </ul>

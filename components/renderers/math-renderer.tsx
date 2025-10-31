@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { MathPracticeLesson } from '@/types/lesson-content';
 import { LessonHeader } from './lesson-header';
+import { Button } from '@/components/ui/button';
+import { PlayfulBadge } from '@/components/ui/playful-badge';
+import { Lightbulb, CheckCircle, XCircle, RefreshCw, Calculator as CalcIcon } from 'lucide-react';
+import Confetti from 'react-confetti';
 
 interface MathRendererProps {
   lesson: MathPracticeLesson;
@@ -58,53 +62,93 @@ export function MathRenderer({ lesson }: MathRendererProps) {
   if (isComplete) {
     const percentage = Math.round((score / totalProblems) * 100);
     const isGoodScore = percentage >= 70;
+    const [showConfetti, setShowConfetti] = useState(isGoodScore);
 
     return (
-      <div className="min-h-screen bg-background py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-12 px-4">
         <div className="max-w-4xl mx-auto space-y-8">
+          {/* Confetti for good scores */}
+          {isGoodScore && showConfetti && (
+            <Confetti
+              width={typeof window !== 'undefined' ? window.innerWidth : 300}
+              height={typeof window !== 'undefined' ? window.innerHeight : 200}
+              recycle={false}
+              numberOfPieces={500}
+              gravity={0.3}
+              onConfettiComplete={() => setShowConfetti(false)}
+            />
+          )}
+
           {/* Header with Back Button */}
           <LessonHeader
             title={lesson.title}
             description="Practice Complete!"
+            score={percentage}
           />
 
-          <div className="bg-card border border-border/50 rounded-2xl shadow-lg p-6 md:p-8 text-center space-y-6">
-            <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center ${
-              isGoodScore ? 'bg-success/10' : 'bg-warning/10'
-            }`}>
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-8 md:p-12 text-center space-y-8 animate-bounce-in">
+            {/* Sparky Mascot */}
+            <svg
+              viewBox="0 0 200 200"
+              className={`w-32 h-32 mx-auto ${isGoodScore ? 'animate-tada' : 'animate-float'}`}
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <linearGradient id="mathStarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor={isGoodScore ? "#10B981" : "#F59E0B"} />
+                  <stop offset="50%" stopColor={isGoodScore ? "#3B82F6" : "#F97316"} />
+                  <stop offset="100%" stopColor={isGoodScore ? "#8B5CF6" : "#EF4444"} />
+                </linearGradient>
+              </defs>
+              <path
+                d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
+                fill="url(#mathStarGradient)"
+                stroke={isGoodScore ? "#059669" : "#DC2626"}
+                strokeWidth="3"
+              />
+              <circle cx="85" cy="85" r="8" fill="white" />
+              <circle cx="115" cy="85" r="8" fill="white" />
+              <circle cx="87" cy="87" r="4" fill="#1F2937" />
+              <circle cx="117" cy="87" r="4" fill="#1F2937" />
               {isGoodScore ? (
-                <svg className="w-12 h-12 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+                <path d="M 75 100 Q 100 125 125 100" stroke="#1F2937" strokeWidth="4" strokeLinecap="round" fill="none" />
               ) : (
-                <svg className="w-12 h-12 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
+                <path d="M 80 105 Q 100 120 120 105" stroke="#1F2937" strokeWidth="3" strokeLinecap="round" fill="none" />
               )}
-            </div>
+            </svg>
 
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground">Practice Complete!</h1>
+            <h1 className="font-display text-4xl md:text-5xl font-extrabold gradient-text-magic">
+              Practice Complete!
+            </h1>
 
-            <div className="space-y-2">
-              <p className="text-3xl font-bold text-accent">{score} / {totalProblems}</p>
-              <p className="text-xl text-muted-foreground">{percentage}% Correct</p>
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-100 to-purple-100 px-8 py-4 rounded-2xl">
+                <CalcIcon className="w-8 h-8 text-blue-600" />
+                <p className="text-4xl font-bold text-gray-800">{score} / {totalProblems}</p>
+              </div>
+              <p className="text-2xl font-semibold text-gray-700">{percentage}% Correct</p>
             </div>
 
             {isGoodScore ? (
-              <p className="text-lg text-success">Excellent work! You're a math star!</p>
+              <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-2xl p-6">
+                <p className="text-xl font-bold text-green-700">🎉 Excellent work! You're a math star! ⭐</p>
+              </div>
             ) : (
-              <p className="text-lg text-warning">Good effort! Keep practicing!</p>
+              <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-6">
+                <p className="text-xl font-bold text-orange-700">💪 Good effort! Keep practicing!</p>
+              </div>
             )}
 
-            <button
+            <Button
               onClick={handleRestart}
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md px-6 py-3 transition-all duration-200 font-semibold"
+              variant="playful"
+              size="xl"
+              className="w-full max-w-md mx-auto"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-              </svg>
+              <RefreshCw className="w-5 h-5" />
               Practice Again
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -112,7 +156,7 @@ export function MathRenderer({ lesson }: MathRendererProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header with Back Button */}
         <LessonHeader
@@ -122,11 +166,18 @@ export function MathRenderer({ lesson }: MathRendererProps) {
           score={score}
         />
 
+        {/* Problem Number Badge */}
+        <div className="flex justify-center">
+          <PlayfulBadge variant="magic" size="lg" icon={<CalcIcon className="w-5 h-5" />}>
+            Problem {currentIndex + 1} of {totalProblems}
+          </PlayfulBadge>
+        </div>
+
         {/* Problem Card */}
-        <div className="bg-card border border-border/50 rounded-2xl shadow-lg p-6 md:p-8 space-y-6">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-6 md:p-8 space-y-6 animate-slide-in-up">
           {/* Problem */}
-          <div className="bg-gradient-to-br from-accent to-accent/70 rounded-xl p-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-accent-foreground text-center">
+          <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-white text-center font-display">
               {currentProblem.question}
             </h2>
           </div>
@@ -146,16 +197,21 @@ export function MathRenderer({ lesson }: MathRendererProps) {
           {currentProblem.hint && !hasAnswered && (
             <div className="text-center">
               {showHint ? (
-                <div className="bg-warning/10 border border-warning/20 rounded-xl p-4">
-                  <p className="text-warning">{currentProblem.hint}</p>
+                <div className="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-300 rounded-2xl p-4">
+                  <div className="flex items-start gap-2">
+                    <Lightbulb className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-yellow-800 font-semibold">{currentProblem.hint}</p>
+                  </div>
                 </div>
               ) : (
-                <button
+                <Button
                   onClick={() => setShowHint(true)}
-                  className="text-sm text-muted-foreground hover:text-foreground underline"
+                  variant="sunshine"
+                  size="sm"
                 >
+                  <Lightbulb className="w-4 h-4" />
                   Need a hint?
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -173,14 +229,14 @@ export function MathRenderer({ lesson }: MathRendererProps) {
                   key={index}
                   onClick={() => handleSelectAnswer(option)}
                   disabled={hasAnswered}
-                  className={`px-6 py-5 rounded-xl text-2xl font-semibold transition-all duration-200 ${
+                  className={`px-6 py-5 rounded-2xl text-2xl font-bold transition-all duration-200 transform ${
                     showCorrect
-                      ? 'bg-success/20 border-2 border-success text-success'
+                      ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white border-2 border-green-600 scale-110 shadow-playful-lg'
                       : showIncorrect
-                      ? 'bg-destructive/20 border-2 border-destructive text-destructive'
+                      ? 'bg-gradient-to-br from-red-400 to-red-500 text-white border-2 border-red-600 animate-wiggle'
                       : isSelected
-                      ? 'bg-accent/90 border-2 border-accent text-accent-foreground shadow-lg'
-                      : 'bg-card border-2 border-border hover:bg-accent/20 hover:border-accent hover:shadow-md'
+                      ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white border-2 border-purple-600 shadow-lg scale-105'
+                      : 'bg-white border-2 border-gray-300 text-gray-800 hover:bg-gradient-to-br hover:from-blue-100 hover:to-purple-100 hover:border-blue-400 hover:scale-105 hover:shadow-md'
                   } ${hasAnswered ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   {option}
@@ -191,57 +247,58 @@ export function MathRenderer({ lesson }: MathRendererProps) {
 
           {/* Check Answer Button */}
           {selectedAnswer !== null && !hasAnswered && (
-            <button
+            <Button
               onClick={handleCheckAnswer}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md px-6 py-3 transition-all duration-200 font-semibold"
+              variant="magic"
+              size="xl"
+              className="w-full"
             >
+              <CheckCircle className="w-5 h-5" />
               Check Answer
-            </button>
+            </Button>
           )}
 
           {/* Explanation */}
           {hasAnswered && currentProblem.explanation && (
-            <div className="bg-accent/10 border border-accent/20 rounded-xl p-4">
-              <p className="text-foreground">{currentProblem.explanation}</p>
+            <div className="bg-gradient-to-r from-blue-100 to-purple-100 border-2 border-blue-300 rounded-2xl p-4">
+              <p className="text-blue-900 font-semibold">{currentProblem.explanation}</p>
             </div>
           )}
 
           {/* Next Button */}
           {hasAnswered && (
-            <button
+            <Button
               onClick={handleNext}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md px-6 py-3 transition-all duration-200 font-semibold"
+              variant="playful"
+              size="xl"
+              className="w-full"
             >
-              {currentIndex < totalProblems - 1 ? 'Next Problem' : 'Finish Practice'}
-            </button>
+              {currentIndex < totalProblems - 1 ? 'Next Problem →' : 'Finish Practice 🎉'}
+            </Button>
           )}
         </div>
 
         {/* Feedback */}
         {hasAnswered && (
-          <div className={`p-6 rounded-xl flex gap-3 items-start ${
+          <div className={`p-6 rounded-2xl flex gap-3 items-start animate-bounce-in ${
             selectedAnswer === currentProblem.answer
-              ? 'bg-success/10 border border-success/20'
-              : 'bg-destructive/10 border border-destructive/30'
+              ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-400'
+              : 'bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-400'
           }`}>
             {selectedAnswer === currentProblem.answer ? (
               <>
-                <svg className="w-6 h-6 text-success flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+                <CheckCircle className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
                 <div>
-                  <p className="text-success text-lg md:text-xl font-semibold">Perfect!</p>
-                  <p className="text-success">{currentProblem.question} = {currentProblem.answer}</p>
+                  <p className="text-green-700 text-xl md:text-2xl font-bold">Perfect! 🎉</p>
+                  <p className="text-green-700 font-semibold">{currentProblem.question} = {currentProblem.answer}</p>
                 </div>
               </>
             ) : (
               <>
-                <svg className="w-6 h-6 text-destructive flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+                <XCircle className="w-8 h-8 text-red-600 flex-shrink-0 mt-1" />
                 <div>
-                  <p className="text-destructive text-lg md:text-xl font-semibold">Not quite!</p>
-                  <p className="text-destructive">The correct answer is {currentProblem.answer}</p>
+                  <p className="text-red-700 text-xl md:text-2xl font-bold">Not quite! 💪</p>
+                  <p className="text-red-700 font-semibold">The correct answer is {currentProblem.answer}</p>
                 </div>
               </>
             )}

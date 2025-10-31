@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { FlashcardLesson } from '@/types/lesson-content';
 import { LessonHeader } from './lesson-header';
+import { PlayfulBadge } from '@/components/ui/playful-badge';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, RotateCcw, Sparkles } from 'lucide-react';
 
 interface FlashcardRendererProps {
   lesson: FlashcardLesson;
@@ -34,7 +37,7 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header with Back Button */}
         <LessonHeader
@@ -43,63 +46,132 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
           progress={{ current: currentIndex + 1, total: totalCards }}
         />
 
-        {/* Flashcard */}
-        <div
-          onClick={handleFlip}
-          className="bg-card border border-border/50 rounded-2xl shadow-lg p-6 md:p-12 min-h-[400px] flex flex-col items-center justify-center cursor-pointer hover:shadow-xl transition-all duration-200"
-        >
-          <div className="text-center space-y-6 w-full">
-            {!isFlipped ? (
-              <>
-                <p className="text-sm text-muted-foreground uppercase tracking-wide">Front</p>
-                <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+        {/* Card Counter Badge */}
+        <div className="flex justify-center">
+          <PlayfulBadge variant="magic" size="lg" icon={<Sparkles className="w-5 h-5" />}>
+            Card {currentIndex + 1} of {totalCards}
+          </PlayfulBadge>
+        </div>
+
+        {/* 3D Flashcard with Flip Animation */}
+        <div className="perspective-1000 px-4">
+          <div
+            onClick={handleFlip}
+            className="relative w-full h-[500px] cursor-pointer"
+            style={{
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.6s',
+              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            }}
+          >
+            {/* Front of Card */}
+            <div
+              className="absolute w-full h-full backface-hidden rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 p-8 md:p-12 flex flex-col items-center justify-center shadow-playful-lg"
+              style={{ backfaceVisibility: 'hidden' }}
+            >
+              <div className="text-center space-y-6 w-full">
+                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Sparkles className="w-4 h-4 text-white" />
+                  <span className="text-sm text-white font-semibold uppercase tracking-wide">Question</span>
+                </div>
+
+                <h2 className="font-display text-3xl md:text-5xl font-extrabold text-white leading-tight">
                   {currentCard.front}
                 </h2>
-                {currentCard.hint && !isFlipped && (
-                  <p className="text-sm text-warning">{currentCard.hint}</p>
+
+                {currentCard.hint && (
+                  <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 mt-6">
+                    <p className="text-white/90 text-lg">💡 Hint: {currentCard.hint}</p>
+                  </div>
                 )}
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-muted-foreground uppercase tracking-wide">Back</p>
-                <p className="text-2xl md:text-3xl text-foreground">
+
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+                  <p className="text-white/80 text-sm flex items-center gap-2 animate-bounce">
+                    <RotateCcw className="w-4 h-4" />
+                    Click to flip
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Back of Card */}
+            <div
+              className="absolute w-full h-full backface-hidden rounded-3xl bg-gradient-to-br from-green-500 to-teal-600 p-8 md:p-12 flex flex-col items-center justify-center shadow-playful-lg"
+              style={{
+                backfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)',
+              }}
+            >
+              <div className="text-center space-y-6 w-full">
+                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Sparkles className="w-4 h-4 text-white" />
+                  <span className="text-sm text-white font-semibold uppercase tracking-wide">Answer</span>
+                </div>
+
+                <p className="font-display text-2xl md:text-4xl font-bold text-white leading-relaxed">
                   {currentCard.back}
                 </p>
-              </>
-            )}
 
-            {currentCard.image && (
-              <div className="flex justify-center mt-6">
-                <img
-                  src={currentCard.image.src}
-                  alt={currentCard.image.alt}
-                  className="w-full max-w-sm rounded-lg shadow-md"
-                />
+                {currentCard.image && (
+                  <div className="flex justify-center mt-6">
+                    <img
+                      src={currentCard.image.src}
+                      alt={currentCard.image.alt}
+                      className="w-full max-w-md rounded-2xl shadow-playful"
+                    />
+                  </div>
+                )}
+
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+                  <p className="text-white/80 text-sm flex items-center gap-2 animate-bounce">
+                    <RotateCcw className="w-4 h-4" />
+                    Click to flip back
+                  </p>
+                </div>
               </div>
-            )}
-
-            <p className="text-sm text-muted-foreground mt-8">
-              Click to {isFlipped ? 'flip back' : 'see answer'}
-            </p>
+            </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="flex gap-4 justify-center">
-          <button
-            onClick={handlePrevious}
+        {/* Navigation Buttons */}
+        <div className="flex gap-4 justify-center items-center">
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePrevious();
+            }}
             disabled={currentIndex === 0}
-            className="px-6 py-3 bg-card border-2 border-border rounded-xl hover:bg-accent/20 hover:border-accent disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            variant="magic"
+            size="lg"
           >
+            <ChevronLeft className="w-5 h-5" />
             Previous
-          </button>
-          <button
-            onClick={handleNext}
+          </Button>
+
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleFlip();
+            }}
+            variant="sunshine"
+            size="lg"
+          >
+            <RotateCcw className="w-5 h-5" />
+            Flip Card
+          </Button>
+
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNext();
+            }}
             disabled={currentIndex === totalCards - 1}
-            className="px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            variant="magic"
+            size="lg"
           >
             Next
-          </button>
+            <ChevronRight className="w-5 h-5" />
+          </Button>
         </div>
       </div>
     </div>

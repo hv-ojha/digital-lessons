@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react';
 import { MatchingLesson } from '@/types/lesson-content';
 import { LessonHeader } from './lesson-header';
+import { Button } from '@/components/ui/button';
+import { PlayfulBadge } from '@/components/ui/playful-badge';
+import { Link2, CheckCircle, RefreshCw, Sparkles, Trophy } from 'lucide-react';
+import Confetti from 'react-confetti';
 
 interface MatchingRendererProps {
   lesson: MatchingLesson;
@@ -13,6 +17,7 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
   const [matches, setMatches] = useState<Map<number, number>>(new Map());
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
   const [isComplete, setIsComplete] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // Shuffle right items on mount
   useEffect(() => {
@@ -54,6 +59,7 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
       });
       if (allCorrect) {
         setIsComplete(true);
+        setShowConfetti(true);
       }
     }
   };
@@ -69,28 +75,81 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
 
   if (isComplete) {
     return (
-      <div className="min-h-screen bg-background py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 py-12 px-4">
+        {/* Confetti celebration */}
+        {showConfetti && (
+          <Confetti
+            width={typeof window !== 'undefined' ? window.innerWidth : 300}
+            height={typeof window !== 'undefined' ? window.innerHeight : 200}
+            recycle={false}
+            numberOfPieces={500}
+            gravity={0.3}
+            onConfettiComplete={() => setShowConfetti(false)}
+          />
+        )}
+
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Header with Back Button */}
           <LessonHeader
             title={lesson.title}
             description="Perfect Match!"
+            score={100}
           />
 
-          <div className="bg-card border border-border/50 rounded-2xl shadow-lg p-6 md:p-8 text-center space-y-6">
-            <div className="w-20 h-20 mx-auto rounded-full bg-success/10 flex items-center justify-center">
-              <svg className="w-12 h-12 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground">Perfect Match!</h1>
-            <p className="text-lg text-success">You matched all pairs correctly!</p>
-            <button
-              onClick={handleReset}
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md px-6 py-3 transition-all duration-200 font-semibold"
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-8 md:p-12 text-center space-y-8 animate-bounce-in">
+            {/* Sparky Mascot - Celebrating */}
+            <svg
+              viewBox="0 0 200 200"
+              className="w-32 h-32 mx-auto animate-tada"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
             >
+              <defs>
+                <linearGradient id="matchingStarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#EC4899" />
+                  <stop offset="50%" stopColor="#F472B6" />
+                  <stop offset="100%" stopColor="#A855F7" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
+                fill="url(#matchingStarGradient)"
+                stroke="#DB2777"
+                strokeWidth="3"
+              />
+              <circle cx="85" cy="85" r="8" fill="white" />
+              <circle cx="115" cy="85" r="8" fill="white" />
+              <circle cx="87" cy="87" r="4" fill="#1F2937" />
+              <circle cx="117" cy="87" r="4" fill="#1F2937" />
+              {/* Big happy smile */}
+              <path d="M 75 100 Q 100 125 125 100" stroke="#1F2937" strokeWidth="4" strokeLinecap="round" fill="none" />
+            </svg>
+
+            <h1 className="font-display text-4xl md:text-5xl font-extrabold gradient-text-rainbow">
+              Perfect Match! 🎉
+            </h1>
+
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-pink-100 to-purple-100 px-8 py-4 rounded-2xl">
+                <Trophy className="w-8 h-8 text-pink-600" />
+                <p className="text-4xl font-bold text-gray-800">{lesson.pairs.length} / {lesson.pairs.length}</p>
+              </div>
+              <p className="text-2xl font-semibold text-gray-700">100% Correct</p>
+            </div>
+
+            <div className="bg-gradient-to-r from-pink-100 to-rose-100 rounded-2xl p-6">
+              <p className="text-xl font-bold text-pink-700">Incredible! You matched all pairs perfectly! ⭐</p>
+            </div>
+
+            <Button
+              onClick={handleReset}
+              variant="rainbow"
+              size="xl"
+              className="w-full max-w-md mx-auto"
+            >
+              <RefreshCw className="w-5 h-5" />
               Play Again
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -98,7 +157,7 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 py-12 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header with Back Button */}
         <LessonHeader
@@ -107,10 +166,46 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
           progress={{ current: matches.size, total: lesson.pairs.length }}
         />
 
+        {/* Progress Badge */}
+        <div className="flex justify-center">
+          <PlayfulBadge variant="rainbow" size="lg" icon={<Link2 className="w-5 h-5" />}>
+            {matches.size} of {lesson.pairs.length} Matched
+          </PlayfulBadge>
+        </div>
+
+        {/* Instructions */}
+        <div className={`p-6 rounded-2xl border-2 flex gap-4 items-center shadow-playful animate-bounce-in ${
+          selectedLeft === null
+            ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300'
+            : 'bg-gradient-to-r from-pink-100 to-rose-100 border-pink-300'
+        }`}>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+            selectedLeft === null ? 'bg-blue-200' : 'bg-pink-200'
+          }`}>
+            {selectedLeft === null ? (
+              <Sparkles className="w-7 h-7 text-blue-700" />
+            ) : (
+              <Link2 className="w-7 h-7 text-pink-700" />
+            )}
+          </div>
+          <p className={`text-lg font-bold ${
+            selectedLeft === null ? 'text-blue-800' : 'text-pink-800'
+          }`}>
+            {selectedLeft === null
+              ? '👈 Click an item on the left to start matching'
+              : '👉 Now click the matching item on the right'}
+          </p>
+        </div>
+
         {/* Matching Grid */}
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8">
           {/* Left Column */}
           <div className="space-y-3">
+            <div className="text-center mb-4">
+              <PlayfulBadge variant="magic" size="default">
+                Choose from here
+              </PlayfulBadge>
+            </div>
             {lesson.pairs.map((pair, index) => {
               const isMatched = matches.has(index);
               const isSelected = selectedLeft === index;
@@ -120,15 +215,18 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
                   key={index}
                   onClick={() => handleLeftClick(index)}
                   disabled={isMatched}
-                  className={`w-full px-6 py-4 rounded-xl text-left text-base md:text-lg transition-all duration-200 ${
+                  className={`w-full p-5 rounded-2xl text-left text-base md:text-lg transition-all duration-200 transform flex items-center gap-3 ${
                     isMatched
-                      ? 'bg-success/20 border-2 border-success text-success cursor-not-allowed'
+                      ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white border-2 border-green-600 cursor-not-allowed shadow-playful-lg scale-105'
                       : isSelected
-                      ? 'bg-accent/90 border-2 border-accent text-accent-foreground shadow-lg'
-                      : 'bg-card border-2 border-border hover:bg-accent/20 hover:border-accent hover:shadow-md'
+                      ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white border-2 border-pink-600 shadow-lg scale-105'
+                      : 'bg-white border-2 border-gray-300 text-gray-800 hover:bg-gradient-to-br hover:from-pink-100 hover:to-rose-100 hover:border-pink-400 hover:scale-105 hover:shadow-md cursor-pointer'
                   }`}
                 >
-                  {pair.left}
+                  {isMatched && (
+                    <CheckCircle className="w-6 h-6 text-white animate-bounce-in" />
+                  )}
+                  <span className="flex-1 font-body">{pair.left}</span>
                 </button>
               );
             })}
@@ -136,6 +234,11 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
 
           {/* Right Column */}
           <div className="space-y-3">
+            <div className="text-center mb-4">
+              <PlayfulBadge variant="sunshine" size="default">
+                Match it here
+              </PlayfulBadge>
+            </div>
             {shuffledRight.map((right, index) => {
               const isMatched = Array.from(matches.values()).includes(index);
 
@@ -144,28 +247,22 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
                   key={index}
                   onClick={() => handleRightClick(index)}
                   disabled={isMatched || selectedLeft === null}
-                  className={`w-full px-6 py-4 rounded-xl text-left text-base md:text-lg transition-all duration-200 ${
+                  className={`w-full p-5 rounded-2xl text-left text-base md:text-lg transition-all duration-200 transform flex items-center gap-3 ${
                     isMatched
-                      ? 'bg-success/20 border-2 border-success text-success cursor-not-allowed'
+                      ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white border-2 border-green-600 cursor-not-allowed shadow-playful-lg scale-105'
                       : selectedLeft !== null
-                      ? 'bg-card border-2 border-border hover:bg-accent/20 hover:border-accent hover:shadow-md cursor-pointer'
-                      : 'bg-card border-2 border-border opacity-50 cursor-not-allowed'
+                      ? 'bg-white border-2 border-gray-300 text-gray-800 hover:bg-gradient-to-br hover:from-yellow-100 hover:to-orange-100 hover:border-yellow-400 hover:scale-105 hover:shadow-md cursor-pointer'
+                      : 'bg-gray-100 border-2 border-gray-200 text-gray-400 opacity-60 cursor-not-allowed'
                   }`}
                 >
-                  {right}
+                  {isMatched && (
+                    <CheckCircle className="w-6 h-6 text-white animate-bounce-in" />
+                  )}
+                  <span className="flex-1 font-body">{right}</span>
                 </button>
               );
             })}
           </div>
-        </div>
-
-        {/* Instructions */}
-        <div className="bg-accent/10 border border-accent/20 rounded-xl p-4 text-center">
-          <p className="text-foreground">
-            {selectedLeft === null
-              ? 'Click an item on the left to start matching'
-              : 'Now click the matching item on the right'}
-          </p>
         </div>
       </div>
     </div>

@@ -19,27 +19,58 @@ export default async function LessonPage({
   // Check for failed status first
   if (lesson.status === 'failed') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="card-elevated text-center max-w-2xl animate-fade-in">
-          <svg className="w-20 h-20 mx-auto mb-6 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-12 text-center max-w-2xl animate-bounce-in">
+          {/* Sad Sparky */}
+          <svg
+            viewBox="0 0 200 200"
+            className="w-32 h-32 mx-auto mb-6 animate-wiggle"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="sadStarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#EF4444" />
+                <stop offset="50%" stopColor="#F97316" />
+                <stop offset="100%" stopColor="#FBBF24" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
+              fill="url(#sadStarGradient)"
+              stroke="#DC2626"
+              strokeWidth="3"
+            />
+            <circle cx="85" cy="85" r="8" fill="white" />
+            <circle cx="115" cy="85" r="8" fill="white" />
+            <circle cx="87" cy="87" r="4" fill="#1F2937" />
+            <circle cx="117" cy="87" r="4" fill="#1F2937" />
+            {/* Sad mouth */}
+            <path
+              d="M 80 115 Q 100 100 120 115"
+              stroke="#1F2937"
+              strokeWidth="3"
+              strokeLinecap="round"
+              fill="none"
+            />
           </svg>
-          <h1 className="text-heading-2 mb-4">
-            Lesson Creation Failed
+
+          <h1 className="font-display text-4xl font-extrabold text-gray-800 mb-4">
+            Oops! Something Went Wrong
           </h1>
-          <p className="text-body text-muted-foreground mb-6">
-            We encountered an issue while creating this lesson. Please try again.
+          <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+            We encountered an issue while creating this lesson. Don&apos;t worry, let&apos;s try again!
           </p>
           {lesson.error_message && (
-            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-8">
-              <p className="text-xs text-destructive font-mono text-left overflow-x-auto">
+            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-8">
+              <p className="text-xs text-red-700 font-mono text-left overflow-x-auto">
                 {lesson.error_message}
               </p>
             </div>
           )}
           <a
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-xl shadow-md hover:shadow-lg hover:bg-primary/90 transition-all duration-200"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-0.5 transition-all duration-200"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -54,21 +85,68 @@ export default async function LessonPage({
   // Check if still generating or no content
   if (lesson.status !== 'completed' || !lesson.content) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="card-elevated text-center max-w-2xl animate-fade-in">
-          <svg className="w-20 h-20 mx-auto mb-6 text-warning animate-spin" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-12 text-center max-w-2xl animate-bounce-in">
+          {/* Thinking Sparky */}
+          <svg
+            viewBox="0 0 200 200"
+            className="w-32 h-32 mx-auto mb-6 animate-float"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="thinkingStarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#3B82F6" />
+                <stop offset="50%" stopColor="#8B5CF6" />
+                <stop offset="100%" stopColor="#EC4899" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
+              fill="url(#thinkingStarGradient)"
+              stroke="#7C3AED"
+              strokeWidth="3"
+            />
+            <circle cx="85" cy="85" r="8" fill="white" />
+            <circle cx="115" cy="85" r="8" fill="white" />
+            <circle cx="87" cy="87" r="4" fill="#1F2937" />
+            <circle cx="117" cy="87" r="4" fill="#1F2937" />
+            {/* Thinking mouth */}
+            <path
+              d="M 85 105 L 115 105"
+              stroke="#1F2937"
+              strokeWidth="3"
+              strokeLinecap="round"
+              fill="none"
+            />
           </svg>
-          <h1 className="text-heading-2 mb-4">
-            Creating Your Lesson
+
+          {/* Animated dots */}
+          <div className="flex justify-center gap-2 mb-6">
+            <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+            <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          </div>
+
+          <h1 className="font-display text-4xl font-extrabold gradient-text-magic mb-4">
+            Creating Your Lesson!
           </h1>
-          <p className="text-body text-muted-foreground mb-8">
-            Please wait while our AI prepares your personalized lesson. This usually takes a few moments.
+          <p className="text-lg text-gray-700 mb-8 leading-relaxed">
+            Sparky is working hard to prepare your personalized lesson. This usually takes just a few moments!
           </p>
+
+          {/* Estimated time */}
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-purple-100 px-6 py-3 rounded-full mb-8">
+            <svg className="w-5 h-5 text-purple-600 animate-spin" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            <span className="font-semibold text-purple-800">Estimated time: 30-60 seconds</span>
+          </div>
+
           <a
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground font-semibold rounded-xl hover:bg-secondary/80 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -100,10 +178,36 @@ export default async function LessonPage({
     console.error('Invalid lesson JSON (v1):', validation.error);
     console.error('Invalid lesson JSON (v2):', flexibleValidation.error);
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="card-elevated text-center max-w-2xl">
-          <h1 className="text-heading-2 mb-4">Invalid Lesson Data</h1>
-          <p className="text-body text-muted-foreground">
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 flex items-center justify-center px-4">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-12 text-center max-w-2xl animate-bounce-in">
+          {/* Confused Sparky */}
+          <svg
+            viewBox="0 0 200 200"
+            className="w-32 h-32 mx-auto mb-6 animate-wiggle"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="confusedStarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#F59E0B" />
+                <stop offset="50%" stopColor="#F97316" />
+                <stop offset="100%" stopColor="#EF4444" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
+              fill="url(#confusedStarGradient)"
+              stroke="#DC2626"
+              strokeWidth="3"
+            />
+            <circle cx="80" cy="85" r="8" fill="white" />
+            <circle cx="120" cy="85" r="8" fill="white" />
+            <circle cx="82" cy="87" r="4" fill="#1F2937" />
+            <circle cx="122" cy="87" r="4" fill="#1F2937" />
+            <path d="M 85 105 Q 100 110 115 105" stroke="#1F2937" strokeWidth="3" strokeLinecap="round" fill="none" />
+          </svg>
+          <h1 className="font-display text-4xl font-extrabold text-gray-800 mb-4">Invalid Lesson Data</h1>
+          <p className="text-lg text-gray-700 leading-relaxed">
             This lesson could not be displayed due to invalid data.
           </p>
         </div>
@@ -113,10 +217,36 @@ export default async function LessonPage({
     // JSON parsing failed
     console.error('Failed to parse lesson JSON:', error);
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="card-elevated text-center max-w-2xl">
-          <h1 className="text-heading-2 mb-4">Error Loading Lesson</h1>
-          <p className="text-body text-muted-foreground">
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 flex items-center justify-center px-4">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-12 text-center max-w-2xl animate-bounce-in">
+          {/* Confused Sparky */}
+          <svg
+            viewBox="0 0 200 200"
+            className="w-32 h-32 mx-auto mb-6 animate-wiggle"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="errorStarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#F59E0B" />
+                <stop offset="50%" stopColor="#F97316" />
+                <stop offset="100%" stopColor="#EF4444" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
+              fill="url(#errorStarGradient)"
+              stroke="#DC2626"
+              strokeWidth="3"
+            />
+            <circle cx="80" cy="85" r="8" fill="white" />
+            <circle cx="120" cy="85" r="8" fill="white" />
+            <circle cx="82" cy="87" r="4" fill="#1F2937" />
+            <circle cx="122" cy="87" r="4" fill="#1F2937" />
+            <path d="M 85 105 Q 100 110 115 105" stroke="#1F2937" strokeWidth="3" strokeLinecap="round" fill="none" />
+          </svg>
+          <h1 className="font-display text-4xl font-extrabold text-gray-800 mb-4">Error Loading Lesson</h1>
+          <p className="text-lg text-gray-700 leading-relaxed">
             This lesson could not be displayed due to a parsing error.
           </p>
         </div>

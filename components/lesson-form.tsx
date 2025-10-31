@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { SparklyMascot } from '@/components/ui/sparky-mascot';
+import { Sparkles, Loader2, Plus, Lightbulb } from 'lucide-react';
 
 interface LessonFormProps {
   onLessonCreated: () => void;
@@ -49,14 +51,36 @@ export function LessonForm({ onLessonCreated }: LessonFormProps) {
     }
   };
 
+  // Show generating state with Sparky
+  if (isGenerating) {
+    return (
+      <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-12 text-center animate-bounce-in">
+        <SparklyMascot mood="thinking" size="xl" animate />
+        <h2 className="font-display text-3xl font-bold gradient-text-magic mt-6 mb-4">
+          Sparky is Creating Your Lesson!
+        </h2>
+        <p className="text-lg text-gray-600 mb-8 max-w-md mx-auto">
+          Hold tight! Your personalized learning adventure is being crafted just for you...
+        </p>
+        <div className="flex items-center justify-center gap-2 text-blue-600">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span className="font-semibold">This usually takes 30-60 seconds</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="card-elevated animate-slide-up">
-      <div className="mb-8">
-        <h2 className="text-heading-2 gradient-text mb-3 text-balance">
+    <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-8 md:p-10 animate-slide-up">
+      <div className="text-center mb-8">
+        <div className="inline-block mb-4">
+          <Sparkles className="w-16 h-16 text-purple-500 animate-float" />
+        </div>
+        <h2 className="font-display text-3xl md:text-4xl font-bold gradient-text-rainbow mb-3">
           Create Your Lesson
         </h2>
-        <p className="text-body text-muted-foreground">
-          Tell us what you want to learn, and we'll craft a personalized lesson just for you
+        <p className="text-lg text-gray-700">
+          Tell us what you want to learn, and we'll craft a personalized lesson just for you! ✨
         </p>
       </div>
 
@@ -64,8 +88,9 @@ export function LessonForm({ onLessonCreated }: LessonFormProps) {
         <div className="space-y-3">
           <label
             htmlFor="outline"
-            className="block text-lg font-semibold text-foreground"
+            className="block font-display text-xl font-bold text-gray-800 flex items-center gap-2"
           >
+            <Lightbulb className="w-6 h-6 text-yellow-500" />
             What would you like to learn?
           </label>
           <div className="relative">
@@ -74,23 +99,23 @@ export function LessonForm({ onLessonCreated }: LessonFormProps) {
               value={outline}
               onChange={(e) => setOutline(e.target.value)}
               placeholder="Example: A 10 question pop quiz on Florida's history and geography"
-              className="w-full px-5 py-4 text-base bg-background border-2 border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:border-transparent transition-all duration-200 min-h-[140px] resize-none placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-6 py-5 text-lg bg-white border-3 border-purple-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-300 focus:border-purple-400 transition-all duration-200 min-h-[160px] resize-none placeholder:text-gray-400 shadow-inner font-body"
               disabled={isGenerating}
               maxLength={500}
             />
-            <div className="absolute bottom-3 right-3 text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md">
+            <div className="absolute bottom-4 right-4 bg-purple-100 text-purple-700 font-semibold text-sm px-3 py-1 rounded-full">
               {outline.length}/500
             </div>
           </div>
         </div>
 
         {error && (
-          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 animate-fade-in">
-            <div className="flex gap-3">
-              <svg className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-sm text-destructive font-medium">
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 animate-wiggle">
+            <div className="flex gap-3 items-center">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-red-500" />
+              </div>
+              <p className="text-base text-red-700 font-semibold">
                 {error}
               </p>
             </div>
@@ -99,61 +124,59 @@ export function LessonForm({ onLessonCreated }: LessonFormProps) {
 
         <Button
           type="submit"
-          disabled={isGenerating || outline.trim().length < 5}
-          className="w-full py-6 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={outline.trim().length < 5}
+          variant="playful"
+          size="xl"
+          className="w-full"
         >
-          {isGenerating ? (
-            <span className="flex items-center justify-center gap-3">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Creating Your Lesson
-            </span>
-          ) : (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Generate Lesson
-            </span>
-          )}
+          <Plus className="w-6 h-6" />
+          Generate Lesson
         </Button>
       </form>
 
-      <div className="mt-8 p-6 bg-muted/50 rounded-xl border border-border/50 backdrop-blur-sm">
-        <div className="flex gap-3 items-start">
-          <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
-            <svg className="w-5 h-5 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
+      <div className="mt-8 p-6 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl border-2 border-yellow-200 shadow-playful">
+        <div className="flex gap-4 items-start">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center flex-shrink-0 shadow-md">
+            <Lightbulb className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="text-base font-semibold text-foreground mb-3">
-              Need inspiration? Try these examples
+            <h3 className="font-display text-xl font-bold text-gray-800 mb-4">
+              Need inspiration? Try these examples! 💡
             </h3>
             <ul className="space-y-3">
-              <li className="flex gap-3 items-start group cursor-pointer" onClick={() => setOutline("A one-pager on how to divide with long division")}>
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-foreground/40 mt-2 group-hover:bg-accent-foreground transition-colors"></div>
-                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors flex-1">
+              <li
+                className="flex gap-3 items-center p-3 bg-white/80 rounded-xl group cursor-pointer hover:bg-white hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                onClick={() => setOutline("A one-pager on how to divide with long division")}
+              >
+                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 group-hover:scale-150 transition-transform"></div>
+                <span className="text-base text-gray-700 group-hover:text-purple-700 font-medium transition-colors flex-1">
                   A one-pager on how to divide with long division
                 </span>
+                <Sparkles className="w-4 h-4 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
               </li>
-              <li className="flex gap-3 items-start group cursor-pointer" onClick={() => setOutline("An explanation of how the Cartesian Grid works")}>
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-foreground/40 mt-2 group-hover:bg-accent-foreground transition-colors"></div>
-                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors flex-1">
+              <li
+                className="flex gap-3 items-center p-3 bg-white/80 rounded-xl group cursor-pointer hover:bg-white hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                onClick={() => setOutline("An explanation of how the Cartesian Grid works")}
+              >
+                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:scale-150 transition-transform"></div>
+                <span className="text-base text-gray-700 group-hover:text-blue-700 font-medium transition-colors flex-1">
                   An explanation of how the Cartesian Grid works
                 </span>
+                <Sparkles className="w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
               </li>
-              <li className="flex gap-3 items-start group cursor-pointer" onClick={() => setOutline("A test on counting numbers from 1 to 100")}>
-                <div className="w-1.5 h-1.5 rounded-full bg-accent-foreground/40 mt-2 group-hover:bg-accent-foreground transition-colors"></div>
-                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors flex-1">
+              <li
+                className="flex gap-3 items-center p-3 bg-white/80 rounded-xl group cursor-pointer hover:bg-white hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                onClick={() => setOutline("A test on counting numbers from 1 to 100")}
+              >
+                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 group-hover:scale-150 transition-transform"></div>
+                <span className="text-base text-gray-700 group-hover:text-green-700 font-medium transition-colors flex-1">
                   A test on counting numbers from 1 to 100
                 </span>
+                <Sparkles className="w-4 h-4 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
               </li>
             </ul>
-            <p className="text-xs text-muted-foreground mt-4 italic">
-              Click any example to use it as your prompt
+            <p className="text-sm text-gray-600 mt-4 font-semibold text-center">
+              ✨ Click any example to use it as your prompt ✨
             </p>
           </div>
         </div>

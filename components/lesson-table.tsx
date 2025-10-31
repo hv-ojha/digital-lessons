@@ -5,6 +5,27 @@ import { useRouter } from 'next/navigation';
 import { Lesson } from '@/types/lesson';
 import { Badge } from '@/components/ui/badge';
 import { subscribeToLessonsChanges } from '@/lib/db/lessons-client';
+import {
+  PlayfulCard,
+  PlayfulCardHeader,
+  PlayfulCardContent,
+  PlayfulCardTitle,
+  PlayfulCardDescription,
+} from '@/components/ui/playful-card';
+import { PlayfulBadge } from '@/components/ui/playful-badge';
+import { Button } from '@/components/ui/button';
+import {
+  BookOpen,
+  Calculator,
+  Sparkles,
+  Zap,
+  Brain,
+  Puzzle,
+  CheckCircle,
+  Loader2,
+  AlertCircle,
+  RefreshCw
+} from 'lucide-react';
 
 interface LessonTableProps {
   initialLessons: Lesson[];
@@ -130,120 +151,186 @@ export function LessonTable({ initialLessons }: LessonTableProps) {
     }
   };
 
+  // Get icon and gradient based on lesson type or default
+  const getLessonIcon = (lesson: Lesson) => {
+    const type = lesson.type?.toLowerCase() || 'general';
+    const iconClass = "w-20 h-20 animate-float";
+
+    switch (type) {
+      case 'math':
+        return <Calculator className={`${iconClass} text-blue-600`} />;
+      case 'reading':
+        return <BookOpen className={`${iconClass} text-purple-600`} />;
+      case 'quiz':
+        return <Zap className={`${iconClass} text-yellow-600`} />;
+      case 'flashcard':
+        return <Brain className={`${iconClass} text-pink-600`} />;
+      case 'interactive':
+      case 'matching':
+        return <Puzzle className={`${iconClass} text-green-600`} />;
+      default:
+        return <Sparkles className={`${iconClass} text-indigo-600`} />;
+    }
+  };
+
+  const getGradientForType = (lesson: Lesson): "purple" | "blue" | "green" | "yellow" | "pink" => {
+    const type = lesson.type?.toLowerCase() || 'general';
+    switch (type) {
+      case 'math':
+        return 'blue';
+      case 'reading':
+        return 'purple';
+      case 'quiz':
+        return 'yellow';
+      case 'flashcard':
+        return 'pink';
+      case 'interactive':
+      case 'matching':
+        return 'green';
+      default:
+        return 'purple';
+    }
+  };
+
   if (lessons.length === 0) {
     return (
-      <div className="card-elegant text-center animate-fade-in">
-        <svg className="w-24 h-24 mx-auto mb-6 text-muted-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-        <h3 className="text-heading-3 mb-3">
+      <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-playful p-12 text-center animate-bounce-in">
+        <div className="mb-6">
+          <BookOpen className="w-32 h-32 mx-auto text-purple-300 animate-float" />
+        </div>
+        <h3 className="font-display text-3xl font-bold text-gray-800 mb-4">
           No Lessons Yet
         </h3>
-        <p className="text-body text-muted-foreground">
-          Create your first lesson above to get started on your learning journey
+        <p className="text-lg text-gray-600 max-w-md mx-auto leading-relaxed">
+          Create your first lesson above to get started on your amazing learning journey! 🚀
         </p>
       </div>
     );
   }
 
   return (
-    <div className="card-elevated overflow-hidden animate-slide-up">
-      <div className="bg-gradient-to-br from-accent to-accent/70 px-6 py-5 border-b border-border">
-        <div className="flex items-center gap-3">
-          <svg className="w-8 h-8 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-          <h2 className="text-heading-3 text-accent-foreground">
-            Your Lessons
-          </h2>
-        </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center">
+        <h2 className="font-display text-4xl font-bold gradient-text-magic mb-2">
+          Your Learning Adventures
+        </h2>
+        <p className="text-lg text-gray-600">
+          Click on any ready lesson to start learning! 🌟
+        </p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-muted/50 border-b border-border">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-foreground tracking-wide">
-                Lesson Title
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-foreground tracking-wide">
-                Status
-              </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-foreground tracking-wide">
-                Created
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {lessons.map((lesson) => (
-              <tr
-                key={lesson.id}
-                onClick={() => handleRowClick(lesson)}
-                className={`transition-all duration-200 ${
-                  lesson.status === 'completed'
-                    ? 'cursor-pointer hover:bg-accent/20 group'
-                    : 'cursor-default'
-                }`}
-              >
-                <td className="px-6 py-5">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      lesson.status === 'completed' ? 'bg-success/10' :
-                      lesson.status === 'failed' ? 'bg-destructive/10' :
-                      'bg-warning/10'
-                    }`}>
-                      {lesson.status === 'completed' ? (
-                        <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      ) : lesson.status === 'failed' ? (
-                        <svg className="w-5 h-5 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5 text-warning animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+      {/* Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {lessons.map((lesson, index) => {
+          const gradient = getGradientForType(lesson);
+          const isRetrying = retryingIds.has(lesson.id);
+          const isClickable = lesson.status === 'completed';
+
+          return (
+            <PlayfulCard
+              key={lesson.id}
+              gradient={gradient}
+              hover={isClickable}
+              animate
+              className={isClickable ? 'cursor-pointer' : 'cursor-default'}
+              onClick={() => isClickable && handleRowClick(lesson)}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              {/* Icon Header */}
+              <PlayfulCardHeader gradient={gradient}>
+                {getLessonIcon(lesson)}
+              </PlayfulCardHeader>
+
+              {/* Content */}
+              <PlayfulCardContent>
+                <div className="space-y-4">
+                  {/* Title */}
+                  <PlayfulCardTitle className="line-clamp-2">
+                    {lesson.title}
+                  </PlayfulCardTitle>
+
+                  {/* Description/Outline */}
+                  <PlayfulCardDescription className="line-clamp-3 min-h-[4.5rem]">
+                    {lesson.outline || 'An exciting learning adventure awaits!'}
+                  </PlayfulCardDescription>
+
+                  {/* Status Badge */}
+                  <div className="flex items-center justify-between gap-3">
+                    {lesson.status === 'generating' && (
+                      <PlayfulBadge variant="magic" icon={<Loader2 className="w-4 h-4 animate-spin" />} size="sm">
+                        Creating...
+                      </PlayfulBadge>
+                    )}
+                    {lesson.status === 'completed' && (
+                      <PlayfulBadge variant="success" icon={<CheckCircle className="w-4 h-4" />} size="sm">
+                        Ready!
+                      </PlayfulBadge>
+                    )}
+                    {lesson.status === 'failed' && (
+                      <PlayfulBadge variant="default" icon={<AlertCircle className="w-4 h-4" />} size="sm">
+                        Failed
+                      </PlayfulBadge>
+                    )}
+
+                    {/* Date */}
+                    <span className="text-xs text-gray-500">
+                      {new Date(lesson.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+
+                  {/* Action Button or Retry */}
+                  {lesson.status === 'completed' && (
+                    <Button variant="playful" size="lg" className="w-full">
+                      <Sparkles className="w-5 h-5" />
+                      Start Learning
+                    </Button>
+                  )}
+
+                  {lesson.status === 'generating' && (
+                    <div className="py-3 text-center">
+                      <Loader2 className="w-6 h-6 mx-auto animate-spin text-blue-500" />
+                      <p className="text-sm text-gray-600 mt-2">Sparky is creating your lesson...</p>
+                    </div>
+                  )}
+
+                  {lesson.status === 'failed' && (
+                    <div className="space-y-2">
+                      <Button
+                        variant="magic"
+                        size="lg"
+                        className="w-full"
+                        onClick={(e) => handleRetry(lesson.id, e)}
+                        disabled={isRetrying}
+                      >
+                        {isRetrying ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Retrying...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-5 h-5" />
+                            Try Again
+                          </>
+                        )}
+                      </Button>
+                      {lesson.error_message && (
+                        <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                          {lesson.error_message}
+                        </p>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-base font-semibold text-foreground group-hover:text-accent-foreground transition-colors">
-                        {lesson.title}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                        {lesson.outline}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-5">
-                  {getStatusBadge(lesson)}
-                </td>
-                <td className="px-6 py-5 text-muted-foreground text-sm">
-                  {new Date(lesson.created_at).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  )}
+                </div>
+              </PlayfulCardContent>
+            </PlayfulCard>
+          );
+        })}
       </div>
-
-      {lessons.some(l => l.status === 'completed') && (
-        <div className="bg-accent/10 px-6 py-4 border-t border-border">
-          <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-            </svg>
-            <span><strong>Click on a completed lesson</strong> to view it</span>
-          </p>
-        </div>
-      )}
     </div>
   );
 }
