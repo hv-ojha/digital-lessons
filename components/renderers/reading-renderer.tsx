@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { PlayfulBadge } from '@/components/ui/playful-badge';
 import { BookOpen, CheckCircle, XCircle, Sparkles, Lightbulb, AlertTriangle, Trophy } from 'lucide-react';
 import Confetti from 'react-confetti';
+import Image from 'next/image';
 
 interface ReadingRendererProps {
   lesson: ReadingLesson;
@@ -326,11 +327,16 @@ export function ReadingRenderer({ lesson }: ReadingRendererProps) {
 
             {section.image && (
               <div className="flex justify-center animate-fade-in">
-                <img
-                  src={section.image.src}
-                  alt={section.image.alt}
-                  className="w-full max-w-md rounded-2xl shadow-playful"
-                />
+                <div className="w-full max-w-md rounded-2xl shadow-playful overflow-hidden">
+                  <Image
+                    src={section.image.src}
+                    alt={section.image.alt}
+                    width={500}
+                    height={400}
+                    className="w-full h-auto"
+                    loading="lazy"
+                  />
+                </div>
               </div>
             )}
 

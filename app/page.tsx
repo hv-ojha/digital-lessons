@@ -1,42 +1,24 @@
-'use client';
+import { getAllLessons } from '@/lib/db/lessons-server';
+import { HomeClient } from '@/components/home-client';
 
-import { useState, useEffect } from 'react';
-import { LessonForm } from '@/components/lesson-form';
-import { LessonTable } from '@/components/lesson-table';
-import { Lesson } from '@/types/lesson';
-
-export default function Home() {
-  const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchLessons = async () => {
-    try {
-      const response = await fetch('/api/lessons');
-      if (response.ok) {
-        const data = await response.json();
-        setLessons(data);
-      }
-    } catch (error) {
-      console.error('Error fetching lessons:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLessons();
-  }, []);
-
-  const handleLessonCreated = () => {
-    // Refresh lessons list
-    fetchLessons();
-  };
+/**
+ * Home Page - Server Component
+ *
+ * Benefits of Server Component approach:
+ * - Faster initial page load (data fetched on server)
+ * - Better SEO (lessons list pre-rendered)
+ * - Reduced client-side JavaScript bundle
+ * - Automatic caching by Next.js
+ */
+export default async function Home() {
+  // Fetch lessons on the server - much faster than client-side fetch
+  const lessons = await getAllLessons();
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header with Mascot */}
-        <div className="text-center mb-16 animate-bounce-in">
+        <div className="text-center mb-16">
           {/* Sparky Mascot */}
           <div className="flex justify-center mb-6">
             <div className="relative">
@@ -88,64 +70,8 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Lesson Creation Form */}
-        <div className="mb-16">
-          <LessonForm onLessonCreated={handleLessonCreated} />
-        </div>
-
-        {/* Lessons Table */}
-        {isLoading ? (
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-12 text-center max-w-4xl mx-auto animate-bounce-in">
-            {/* Loading Sparky */}
-            <svg
-              viewBox="0 0 200 200"
-              className="w-24 h-24 mx-auto mb-6 animate-float"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <linearGradient id="loadingStarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#8B5CF6" />
-                  <stop offset="50%" stopColor="#EC4899" />
-                  <stop offset="100%" stopColor="#FBBF24" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
-                fill="url(#loadingStarGradient)"
-                stroke="#7C3AED"
-                strokeWidth="3"
-              />
-              <circle cx="85" cy="85" r="8" fill="white" />
-              <circle cx="115" cy="85" r="8" fill="white" />
-              <circle cx="87" cy="87" r="4" fill="#1F2937" />
-              <circle cx="117" cy="87" r="4" fill="#1F2937" />
-              <path
-                d="M 80 105 Q 100 120 120 105"
-                stroke="#1F2937"
-                strokeWidth="3"
-                strokeLinecap="round"
-                fill="none"
-              />
-            </svg>
-
-            {/* Animated dots */}
-            <div className="flex justify-center gap-2 mb-4">
-              <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-              <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-3 h-3 bg-yellow-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-            </div>
-
-            <h3 className="font-display text-3xl font-extrabold gradient-text-magic mb-2">
-              Loading Your Lessons
-            </h3>
-            <p className="text-lg text-gray-600">
-              Sparky is gathering your learning adventures!
-            </p>
-          </div>
-        ) : (
-          <LessonTable initialLessons={lessons} />
-        )}
+        {/* Client-side interactive components */}
+        <HomeClient initialLessons={lessons} />
 
         {/* Footer */}
         <footer className="mt-20 text-center">

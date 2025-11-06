@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { PlayfulBadge } from '@/components/ui/playful-badge';
 import { Lightbulb, CheckCircle, XCircle, RefreshCw, Calculator as CalcIcon } from 'lucide-react';
 import Confetti from 'react-confetti';
+import Image from 'next/image';
 
 interface MathRendererProps {
   lesson: MathPracticeLesson;
@@ -185,11 +186,16 @@ export function MathRenderer({ lesson }: MathRendererProps) {
           {/* Image if available */}
           {currentProblem.image && (
             <div className="flex justify-center">
-              <img
-                src={currentProblem.image.src}
-                alt={currentProblem.image.alt}
-                className="w-full max-w-md rounded-lg shadow-md"
-              />
+              <div className="w-full max-w-md rounded-lg shadow-md overflow-hidden">
+                <Image
+                  src={currentProblem.image.src}
+                  alt={currentProblem.image.alt}
+                  width={500}
+                  height={400}
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </div>
             </div>
           )}
 

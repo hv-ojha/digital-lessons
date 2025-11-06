@@ -8,6 +8,7 @@ import { PlayfulProgress } from '@/components/ui/playful-progress';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Sparkles, Trophy, RefreshCw } from 'lucide-react';
 import Confetti from 'react-confetti';
+import Image from 'next/image';
 
 interface QuizRendererProps {
   lesson: QuizLesson;
@@ -169,11 +170,16 @@ export function QuizRenderer({ lesson }: QuizRendererProps) {
           {/* Image if available */}
           {currentQuestion.image && (
             <div className="flex justify-center animate-fade-in">
-              <img
-                src={currentQuestion.image.src}
-                alt={currentQuestion.image.alt}
-                className="w-full max-w-md rounded-2xl shadow-playful"
-              />
+              <div className="w-full max-w-md rounded-2xl shadow-playful overflow-hidden">
+                <Image
+                  src={currentQuestion.image.src}
+                  alt={currentQuestion.image.alt}
+                  width={500}
+                  height={400}
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </div>
             </div>
           )}
 

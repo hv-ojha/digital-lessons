@@ -5,9 +5,14 @@ import { Lesson } from '@/types/lesson';
 
 /**
  * Browser-side: Subscribe to lesson changes (for real-time updates)
+ *
+ * OPTIMIZED VERSION:
+ * - Only updates the specific lesson that changed (no full refetch)
+ * - Handles INSERT, UPDATE, and DELETE events separately
+ * - Significantly reduces unnecessary data fetching
  */
 export function subscribeToLessonsChanges(
-  callback: (lessons: Lesson[]) => void
+  callback: (updater: (prevLessons: Lesson[]) => Lesson[]) => void
 ) {
   const supabase = createClient();
 
@@ -17,21 +22,48 @@ export function subscribeToLessonsChanges(
     .on(
       'postgres_changes',
       {
-        event: '*',
+        event: 'INSERT',
         schema: 'public',
         table: 'lessons',
       },
-      () => {
-        // Fetch updated data when any change occurs
-        supabase
-          .from('lessons')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .then(({ data }) => {
-            if (data) {
-              callback(data as Lesson[]);
-            }
-          });
+      (payload) => {
+        console.log('[Real-time] INSERT event:', payload.new);
+        // Add the new lesson to the beginning of the list
+        callback((prevLessons) => [payload.new as Lesson, ...prevLessons]);
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'lessons',
+      },
+      (payload) => {
+        console.log('[Real-time] UPDATE event:', payload.new);
+        // Update only the changed lesson
+        callback((prevLessons) =>
+          prevLessons.map((lesson) =>
+            lesson.id === (payload.new as Lesson).id
+              ? (payload.new as Lesson)
+              : lesson
+          )
+        );
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'lessons',
+      },
+      (payload) => {
+        console.log('[Real-time] DELETE event:', payload.old);
+        // Remove the deleted lesson
+        callback((prevLessons) =>
+          prevLessons.filter((lesson) => lesson.id !== (payload.old as Lesson).id)
+        );
       }
     )
     .subscribe();

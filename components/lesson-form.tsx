@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { SparklyMascot } from '@/components/ui/sparky-mascot';
 import { Sparkles, Loader2, Plus, Lightbulb } from 'lucide-react';
@@ -9,12 +9,26 @@ interface LessonFormProps {
   onLessonCreated: () => void;
 }
 
+// Example prompts - memoized constant to prevent recreation
+const EXAMPLE_PROMPTS = [
+  "A one-pager on how to divide with long division",
+  "An explanation of how the Cartesian Grid works",
+  "A test on counting numbers from 1 to 100"
+] as const;
+
+/**
+ * Optimized Lesson Form Component
+ * - Uses useCallback to memoize event handlers
+ * - Extracts examples as constants
+ * - Prevents unnecessary re-renders
+ */
 export function LessonForm({ onLessonCreated }: LessonFormProps) {
   const [outline, setOutline] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Memoized submit handler
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -49,7 +63,12 @@ export function LessonForm({ onLessonCreated }: LessonFormProps) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setIsGenerating(false);
     }
-  };
+  }, [outline, onLessonCreated]);
+
+  // Memoized example click handler
+  const handleExampleClick = useCallback((example: string) => {
+    setOutline(example);
+  }, []);
 
   // Show generating state with Sparky in center
   if (isGenerating) {
@@ -144,36 +163,29 @@ export function LessonForm({ onLessonCreated }: LessonFormProps) {
               Need inspiration? Try these examples! 💡
             </h3>
             <ul className="space-y-3">
-              <li
-                className="flex gap-3 items-center p-3 bg-white/80 rounded-xl group cursor-pointer hover:bg-white hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
-                onClick={() => setOutline("A one-pager on how to divide with long division")}
-              >
-                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 group-hover:scale-150 transition-transform"></div>
-                <span className="text-base text-gray-700 group-hover:text-purple-700 font-medium transition-colors flex-1">
-                  A one-pager on how to divide with long division
-                </span>
-                <Sparkles className="w-4 h-4 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </li>
-              <li
-                className="flex gap-3 items-center p-3 bg-white/80 rounded-xl group cursor-pointer hover:bg-white hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
-                onClick={() => setOutline("An explanation of how the Cartesian Grid works")}
-              >
-                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 group-hover:scale-150 transition-transform"></div>
-                <span className="text-base text-gray-700 group-hover:text-blue-700 font-medium transition-colors flex-1">
-                  An explanation of how the Cartesian Grid works
-                </span>
-                <Sparkles className="w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </li>
-              <li
-                className="flex gap-3 items-center p-3 bg-white/80 rounded-xl group cursor-pointer hover:bg-white hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
-                onClick={() => setOutline("A test on counting numbers from 1 to 100")}
-              >
-                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 group-hover:scale-150 transition-transform"></div>
-                <span className="text-base text-gray-700 group-hover:text-green-700 font-medium transition-colors flex-1">
-                  A test on counting numbers from 1 to 100
-                </span>
-                <Sparkles className="w-4 h-4 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </li>
+              {EXAMPLE_PROMPTS.map((example, idx) => {
+                const gradients = [
+                  'from-purple-500 to-pink-500',
+                  'from-blue-500 to-cyan-500',
+                  'from-green-500 to-emerald-500'
+                ];
+                const textColors = ['text-purple-700', 'text-blue-700', 'text-green-700'];
+                const iconColors = ['text-purple-400', 'text-blue-400', 'text-green-400'];
+
+                return (
+                  <li
+                    key={idx}
+                    className="flex gap-3 items-center p-3 bg-white/80 rounded-xl group cursor-pointer hover:bg-white hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
+                    onClick={() => handleExampleClick(example)}
+                  >
+                    <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${gradients[idx]} group-hover:scale-150 transition-transform`}></div>
+                    <span className={`text-base text-gray-700 group-hover:${textColors[idx]} font-medium transition-colors flex-1`}>
+                      {example}
+                    </span>
+                    <Sparkles className={`w-4 h-4 ${iconColors[idx]} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                  </li>
+                );
+              })}
             </ul>
             <p className="text-sm text-gray-600 mt-4 font-semibold text-center">
               ✨ Click any example to use it as your prompt ✨

@@ -6,6 +6,7 @@ import { LessonHeader } from './lesson-header';
 import { PlayfulBadge } from '@/components/ui/playful-badge';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, RotateCcw, Sparkles } from 'lucide-react';
+import Image from 'next/image';
 
 interface FlashcardRendererProps {
   lesson: FlashcardLesson;
@@ -114,11 +115,16 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
 
                 {currentCard.image && (
                   <div className="flex justify-center mt-6">
-                    <img
-                      src={currentCard.image.src}
-                      alt={currentCard.image.alt}
-                      className="w-full max-w-md rounded-2xl shadow-playful"
-                    />
+                    <div className="w-full max-w-md rounded-2xl shadow-playful overflow-hidden">
+                      <Image
+                        src={currentCard.image.src}
+                        alt={currentCard.image.alt}
+                        width={500}
+                        height={400}
+                        className="w-full h-auto"
+                        loading="lazy"
+                      />
+                    </div>
                   </div>
                 )}
 

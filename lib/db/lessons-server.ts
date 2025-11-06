@@ -1,8 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
-import { Lesson, LessonStatus } from '@/types/lesson';
+import { Lesson, LessonStatus, LessonSchema, LessonsArraySchema } from '@/types/lesson';
 
 /**
  * Server-side: Create a new lesson with 'generating' status
+ *
+ * IMPROVED: Now validates response data with Zod schema
  */
 export async function createLesson(title: string, outline: string): Promise<Lesson> {
   const supabase = await createClient();
@@ -21,11 +23,23 @@ export async function createLesson(title: string, outline: string): Promise<Less
     throw new Error(`Failed to create lesson: ${error.message}`);
   }
 
-  return data as Lesson;
+  // Validate response data with Zod schema
+  try {
+    return LessonSchema.parse(data);
+  } catch (validationError) {
+    console.error('[DB] Lesson validation failed:', validationError);
+    throw new Error(
+      `Database returned invalid lesson data: ${
+        validationError instanceof Error ? validationError.message : 'Unknown validation error'
+      }`
+    );
+  }
 }
 
 /**
  * Server-side: Get a lesson by ID
+ *
+ * IMPROVED: Now validates response data with Zod schema
  */
 export async function getLesson(id: string): Promise<Lesson | null> {
   const supabase = await createClient();
@@ -44,11 +58,23 @@ export async function getLesson(id: string): Promise<Lesson | null> {
     throw new Error(`Failed to get lesson: ${error.message}`);
   }
 
-  return data as Lesson;
+  // Validate response data with Zod schema
+  try {
+    return LessonSchema.parse(data);
+  } catch (validationError) {
+    console.error('[DB] Lesson validation failed:', validationError);
+    throw new Error(
+      `Database returned invalid lesson data: ${
+        validationError instanceof Error ? validationError.message : 'Unknown validation error'
+      }`
+    );
+  }
 }
 
 /**
  * Server-side: Get all lessons ordered by creation date
+ *
+ * IMPROVED: Now validates response data with Zod schema
  */
 export async function getAllLessons(): Promise<Lesson[]> {
   const supabase = await createClient();
@@ -62,7 +88,26 @@ export async function getAllLessons(): Promise<Lesson[]> {
     throw new Error(`Failed to get lessons: ${error.message}`);
   }
 
-  return (data as Lesson[]) || [];
+  // Validate response data with Zod schema
+  try {
+    return LessonsArraySchema.parse(data || []);
+  } catch (validationError) {
+    console.error('[DB] Lessons array validation failed:', validationError);
+    console.error('[DB] Raw data that failed validation:', JSON.stringify(data, null, 2));
+
+    // In development, provide detailed error; in production, return empty array
+    if (process.env.NODE_ENV === 'development') {
+      throw new Error(
+        `Database returned invalid lessons data: ${
+          validationError instanceof Error ? validationError.message : 'Unknown validation error'
+        }`
+      );
+    }
+
+    // In production, log the error but return empty array to prevent crashes
+    console.error('[DB] Returning empty array due to validation failure');
+    return [];
+  }
 }
 
 /**

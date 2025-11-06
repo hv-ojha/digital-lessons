@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLesson, updateLessonStatus } from '@/lib/db/lessons-server';
 import { generateLessonContent, getGenerationMode } from '@/lib/lesson-generation-service';
 import { logExecutionMode } from '@/lib/execution-mode';
+import { lessonCreationRateLimiter, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
  * POST /api/lessons/[id]/retry - Retry generating a failed lesson
@@ -10,6 +11,28 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Rate limiting (same as lesson creation)
+  const clientId = getClientIdentifier(request);
+  const rateLimit = lessonCreationRateLimiter.check(clientId);
+
+  if (rateLimit.limited) {
+    return NextResponse.json(
+      {
+        error: 'Too many retry requests. Please wait before retrying again.',
+        retryAfter: Math.ceil((rateLimit.resetTime - Date.now()) / 1000),
+      },
+      {
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': '5',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': new Date(rateLimit.resetTime).toISOString(),
+          'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
   try {
     const { id } = await params;
 
@@ -44,6 +67,13 @@ export async function POST(
     // Generate lesson content (auto-detects sync vs async based on environment)
     const result = await generateLessonContent(id, lesson.outline);
 
+    // Rate limit headers for successful responses
+    const rateLimitHeaders = {
+      'X-RateLimit-Limit': '5',
+      'X-RateLimit-Remaining': String(rateLimit.remaining),
+      'X-RateLimit-Reset': new Date(rateLimit.resetTime).toISOString(),
+    };
+
     if (result.mode === 'async') {
       // Async mode (production): Return immediately, Inngest handles generation
       console.log(`✅ [API] Lesson ${id} retry queued for background generation\n`);
@@ -53,6 +83,8 @@ export async function POST(
         status: 'generating',
         message: 'Lesson retry queued for generation',
         mode: 'async',
+      }, {
+        headers: rateLimitHeaders,
       });
     } else {
       // Sync mode (local): Generation completed, return result
@@ -64,6 +96,8 @@ export async function POST(
           status: 'completed',
           message: 'Lesson retry generated successfully',
           mode: 'sync',
+        }, {
+          headers: rateLimitHeaders,
         });
       } else {
         console.error(`❌ [API] Lesson ${id} retry generation failed\n`);
@@ -73,6 +107,8 @@ export async function POST(
           status: 'failed',
           message: 'Lesson retry generation failed',
           mode: 'sync',
+        }, {
+          headers: rateLimitHeaders,
         });
       }
     }
