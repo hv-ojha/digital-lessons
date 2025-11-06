@@ -44,12 +44,20 @@ export class GeminiModelProvider extends AIModelProvider {
       },
     });
 
+    // Extract finish reason to detect truncation
+    let finishReason = 'stop';
+    if (response.candidates && response.candidates.length > 0) {
+      const candidate = response.candidates[0];
+      finishReason = candidate.finishReason?.toLowerCase() || 'stop';
+    }
+
     // Debug: Check response structure
     console.log('🔍 [DEBUG] Gemini response structure:', {
       hasText: !!response.text,
       hasCandidates: !!response.candidates,
       candidatesLength: response.candidates?.length,
       firstCandidate: response.candidates?.[0] ? 'exists' : 'missing',
+      finishReason,
     });
 
     // Extract text from response - Gemini SDK provides convenience property
@@ -72,7 +80,15 @@ export class GeminiModelProvider extends AIModelProvider {
     console.log('🔍 [DEBUG] Extracted text:', {
       textLength: text.length,
       preview: text.substring(0, 100),
+      finishReason,
     });
+
+    // Warn if response was truncated
+    if (finishReason === 'max_tokens' || finishReason === 'length') {
+      console.warn('⚠️  [GEMINI] Response was truncated due to token limit!');
+      console.warn(`   Requested maxOutputTokens: ${config?.maxOutputTokens}`);
+      console.warn(`   Response length: ${text.length} chars (~${this.estimateTokens(text)} tokens)`);
+    }
 
     // Estimate tokens (Gemini doesn't return exact counts in response)
     const inputTokens = this.estimateTokens(fullPrompt);
@@ -86,7 +102,7 @@ export class GeminiModelProvider extends AIModelProvider {
         output: outputTokens,
         total: inputTokens + outputTokens,
       },
-      finishReason: 'stop',
+      finishReason,
     };
   }
 
@@ -206,6 +222,13 @@ Generate the SVG now:`;
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
+  }
+
+  /**
+   * Get provider name
+   */
+  getProviderName(): string {
+    return 'gemini';
   }
 
   /**

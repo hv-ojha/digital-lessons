@@ -1,8 +1,11 @@
 /**
- * OpenAI Model Provider (Placeholder)
+ * OpenAI Model Provider
  *
- * Future implementation for OpenAI GPT models
+ * Implementation for OpenAI GPT models
  * Implements the same AIModelProvider interface for easy switching
+ *
+ * Note: Requires 'openai' package to be installed
+ * Install with: bun add openai
  */
 
 import {
@@ -12,50 +15,92 @@ import {
   ModelCapabilities,
 } from './base';
 
+// Dynamic import type to avoid errors if openai package is not installed
+type OpenAI = any;
+
 export class OpenAIModelProvider extends AIModelProvider {
-  constructor(apiKey: string, modelName: string = 'gpt-4') {
+  private client: OpenAI | null = null;
+
+  constructor(apiKey: string, modelName: string = 'gpt-4o') {
     super(apiKey, modelName);
-    // TODO: Initialize OpenAI client when needed
-    // import OpenAI from 'openai';
-    // this.client = new OpenAI({ apiKey });
+    this.initializeClient();
+  }
+
+  /**
+   * Initialize OpenAI client
+   * Uses dynamic import to avoid errors if package is not installed
+   */
+  private async initializeClient(): Promise<void> {
+    try {
+      const OpenAI = (await import('openai')).default;
+      this.client = new OpenAI({ apiKey: this.apiKey });
+    } catch (error) {
+      console.warn('⚠️  OpenAI package not installed. Install with: bun add openai');
+    }
+  }
+
+  /**
+   * Ensure client is initialized
+   */
+  private async ensureClient(): Promise<void> {
+    if (!this.client) {
+      await this.initializeClient();
+    }
+    if (!this.client) {
+      throw new Error(
+        'OpenAI client not initialized. Install openai package with: bun add openai'
+      );
+    }
   }
 
   /**
    * Generate text completion using OpenAI
    */
   async generateText(request: GenerationRequest): Promise<GenerationResponse> {
-    throw new Error('OpenAI provider not yet implemented. Install openai package and implement this method.');
+    await this.ensureClient();
 
-    // Future implementation:
-    /*
     const { prompt, systemPrompt, config } = request;
 
-    const messages = [];
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
     if (systemPrompt) {
       messages.push({ role: 'system', content: systemPrompt });
     }
     messages.push({ role: 'user', content: prompt });
 
-    const completion = await this.client.chat.completions.create({
-      model: this.modelName,
-      messages,
-      temperature: config?.temperature,
-      max_tokens: config?.maxOutputTokens,
-    });
+    try {
+      const completion = await this.client.chat.completions.create({
+        model: this.modelName,
+        messages,
+        temperature: config?.temperature ?? 0.7,
+        max_tokens: config?.maxOutputTokens,
+        top_p: config?.topP,
+      });
 
-    const text = completion.choices[0].message.content || '';
+      const text = completion.choices[0]?.message?.content || '';
 
-    return {
-      text,
-      model: this.modelName,
-      tokensUsed: {
-        input: completion.usage?.prompt_tokens || 0,
-        output: completion.usage?.completion_tokens || 0,
-        total: completion.usage?.total_tokens || 0,
-      },
-      finishReason: completion.choices[0].finish_reason,
-    };
-    */
+      return {
+        text,
+        model: this.modelName,
+        tokensUsed: {
+          input: completion.usage?.prompt_tokens || 0,
+          output: completion.usage?.completion_tokens || 0,
+          total: completion.usage?.total_tokens || 0,
+        },
+        finishReason: completion.choices[0]?.finish_reason || 'stop',
+      };
+    } catch (error) {
+      console.error('❌ OpenAI API call failed:', error);
+      throw new Error(
+        `OpenAI generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Get provider name
+   */
+  getProviderName(): string {
+    return 'openai';
   }
 
   /**

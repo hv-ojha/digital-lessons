@@ -111,7 +111,7 @@ const generateLessonContent = traceable(
     previousJson?: string
   ): Promise<LessonContent | FlexibleLesson> {
     const temperature = 0.3;
-    const maxTokens = 4096; // Much smaller than before! (was 32768)
+    const maxTokens = 8192; // Increased from 4096 to prevent JSON truncation
 
     console.log(`\n🎨 Generating lesson JSON (Attempt ${retryCount + 1}/${MAX_RETRIES + 1})...`);
     console.log(`   Mode: Flexible/Creative (adapts to any prompt with inline SVG support)`);
@@ -144,6 +144,26 @@ const generateLessonContent = traceable(
       });
 
       console.log(`✅ AI model call successful`);
+      console.log(`   Finish reason: ${response.finishReason}`);
+
+      // Check if response was truncated
+      if (response.finishReason === 'max_tokens' || response.finishReason === 'length') {
+        console.error(`⚠️  AI response was truncated due to token limit!`);
+        console.error(`   maxOutputTokens: ${maxTokens}`);
+        console.error(`   This will likely cause JSON parsing to fail`);
+
+        if (retryCount < MAX_RETRIES) {
+          console.log(`🔄 Retrying with same limit but asking for more concise output (${retryCount + 1}/${MAX_RETRIES})...\n`);
+          // Don't use the truncated response, just retry
+          return generateLessonContent(
+            outline,
+            title,
+            retryCount + 1,
+            `Previous response was truncated due to token limit. Please generate a more concise lesson with fewer sections or shorter content that fits within ${maxTokens} tokens.`,
+            ''
+          );
+        }
+      }
     } catch (error) {
       console.error(`❌ AI model call failed:`, error);
       throw new Error(`AI model call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -156,25 +176,79 @@ const generateLessonContent = traceable(
 
     console.log(`📝 Received JSON (${jsonText.length} chars, ~${estimateTokens(jsonText)} tokens)`);
 
+    // Log first and last parts for debugging
+    if (jsonText.length > 0) {
+      console.log(`   First 100 chars: "${jsonText.substring(0, 100)}..."`);
+      console.log(`   Last 100 chars: "...${jsonText.slice(-100)}"`);
+    }
+
+    // Check if JSON appears truncated (common sign: doesn't end with })
+    const isTruncated = !jsonText.trim().endsWith('}') && !jsonText.trim().endsWith(']');
+    if (isTruncated) {
+      console.warn(`⚠️  JSON appears to be truncated (doesn't end with } or ])`);
+      console.warn(`   Last 50 chars: "${jsonText.slice(-50)}"`);
+    }
+
+    // Check for empty response
+    if (!jsonText || jsonText.length === 0) {
+      console.error(`❌ Empty response from AI model!`);
+      console.error(`   Response object:`, response);
+
+      if (retryCount < MAX_RETRIES) {
+        console.log(`🔄 Retrying due to empty response (${retryCount + 1}/${MAX_RETRIES})...\n`);
+        return generateLessonContent(
+          outline,
+          title,
+          retryCount + 1,
+          `Previous response was empty. Please generate complete valid JSON.`,
+          ''
+        );
+      } else {
+        throw new Error(`AI returned empty response after ${MAX_RETRIES} retries`);
+      }
+    }
+
     // Parse and validate JSON
     console.log(`📝 Parsing and validating JSON...`);
     let parsedJson: unknown;
     try {
       parsedJson = JSON.parse(jsonText);
     } catch (error) {
-      console.log(`❌ JSON parsing failed:`, error);
+      const errorMsg = error instanceof Error ? error.message : 'Invalid JSON';
+      console.error(`❌ JSON parsing failed:`, errorMsg);
+
+      // Check if it's a truncation error
+      if (errorMsg.includes('Unterminated string') || errorMsg.includes('Unexpected end')) {
+        console.error(`⚠️  JSON was truncated! Current maxTokens: ${maxTokens}`);
+        console.error(`   Received ${jsonText.length} chars (~${estimateTokens(jsonText)} tokens)`);
+        console.error(`   This indicates the response was cut off mid-JSON`);
+
+        // Show where it failed
+        if (error instanceof SyntaxError && error.message.includes('position')) {
+          const match = error.message.match(/position (\d+)/);
+          if (match) {
+            const pos = parseInt(match[1]);
+            console.error(`   Error at position ${pos}:`);
+            console.error(`   Context: "...${jsonText.substring(Math.max(0, pos - 50), Math.min(jsonText.length, pos + 50))}..."`);
+          }
+        }
+      }
+
+      // Log the problematic JSON for debugging (truncated to avoid console spam)
+      console.error(`   Problematic JSON (first 500 chars): "${jsonText.substring(0, 500)}..."`);
+      console.error(`   Problematic JSON (last 500 chars): "...${jsonText.slice(-500)}"`)
 
       if (retryCount < MAX_RETRIES) {
-        console.log(`🔄 Retrying (${retryCount + 1}/${MAX_RETRIES})...\n`);
+        console.log(`🔄 Retrying with same maxTokens (${retryCount + 1}/${MAX_RETRIES})...\n`);
         return generateLessonContent(
           outline,
           title,
           retryCount + 1,
-          `JSON parsing error: ${error instanceof Error ? error.message : 'Invalid JSON'}`,
+          `JSON parsing error (possibly truncated): ${errorMsg}. Please ensure the JSON is complete and valid.`,
           jsonText
         );
       } else {
-        throw new Error(`JSON parsing failed after ${MAX_RETRIES} retries: ${error instanceof Error ? error.message : 'Invalid JSON'}`);
+        throw new Error(`JSON parsing failed after ${MAX_RETRIES} retries: ${errorMsg}. Last response was ${jsonText.length} chars.`);
       }
     }
 
@@ -211,7 +285,7 @@ const generateLessonContent = traceable(
       provider: process.env.AI_PROVIDER || 'gemini',
       model: modelProvider.getModelName(),
       temperature: 0.3,
-      max_tokens: 4096,
+      max_tokens: 8192,
       retry_count: inputs.retryCount || 0,
       max_retries: MAX_RETRIES,
       is_retry: (inputs.retryCount || 0) > 0,

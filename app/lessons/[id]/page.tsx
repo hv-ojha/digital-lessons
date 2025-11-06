@@ -3,6 +3,7 @@ import { getLesson } from '@/lib/db/lessons-server';
 import { JsonLessonRenderer } from '@/components/json-lesson-renderer';
 import { validateLessonContent } from '@/types/lesson-content';
 import { validateFlexibleLesson } from '@/types/lesson-content-v2';
+import { LessonErrorBoundary } from '@/components/error-boundary';
 
 export default async function LessonPage({
   params,
@@ -165,13 +166,21 @@ export default async function LessonPage({
     // Try flexible validation first (v2)
     const flexibleValidation = validateFlexibleLesson(parsedContent);
     if (flexibleValidation.isValid && flexibleValidation.data) {
-      return <JsonLessonRenderer content={flexibleValidation.data} title={lesson.title} />;
+      return (
+        <LessonErrorBoundary lessonId={lesson.id}>
+          <JsonLessonRenderer content={flexibleValidation.data} title={lesson.title} />
+        </LessonErrorBoundary>
+      );
     }
 
     // Fallback to standard validation (v1)
     const validation = validateLessonContent(parsedContent);
     if (validation.isValid && validation.data) {
-      return <JsonLessonRenderer content={validation.data} title={lesson.title} />;
+      return (
+        <LessonErrorBoundary lessonId={lesson.id}>
+          <JsonLessonRenderer content={validation.data} title={lesson.title} />
+        </LessonErrorBoundary>
+      );
     }
 
     // Both validations failed - show error

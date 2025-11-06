@@ -6,8 +6,7 @@ import { useState, useCallback, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
-// TODO: Install with: npm install isomorphic-dompurify
-// import DOMPurify from 'isomorphic-dompurify';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface FlexibleRendererProps {
   lesson: FlexibleLesson;
@@ -15,21 +14,15 @@ interface FlexibleRendererProps {
 
 /**
  * Safely sanitize SVG content to prevent XSS attacks
- * TODO: Once DOMPurify is installed, uncomment the sanitization
+ * Uses DOMPurify for comprehensive XSS protection
  */
 const sanitizeSVG = (svg: string): string => {
-  // Basic sanitization - remove script tags and event handlers
-  return svg
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+="[^"]*"/gi, '')
-    .replace(/on\w+='[^']*'/gi, '');
-
-  // TODO: Replace with proper DOMPurify once installed:
-  // return DOMPurify.sanitize(svg, {
-  //   USE_PROFILES: { svg: true, svgFilters: true },
-  //   FORBID_TAGS: ['script'],
-  //   FORBID_ATTR: ['onerror', 'onload']
-  // });
+  return DOMPurify.sanitize(svg, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    FORBID_TAGS: ['script', 'style'],
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
+    KEEP_CONTENT: true,
+  });
 };
 
 /**

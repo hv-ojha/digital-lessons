@@ -7,17 +7,21 @@ export type LessonStatus = 'generating' | 'completed' | 'failed';
  * Protects against database schema changes and invalid data
  */
 export const LessonSchema = z.object({
-  id: z.string().uuid('Invalid lesson ID format'),
+  id: z.string(),
   title: z.string().min(1, 'Title is required'),
   outline: z.string().min(1, 'Outline is required'),
   status: z.enum(['generating', 'completed', 'failed'], {
-    errorMap: () => ({ message: 'Invalid lesson status' }),
+    message: 'Invalid lesson status',
   }),
-  content: z.string().nullable(),
-  error_message: z.string().nullable(),
-  // Supabase returns timestamps as ISO strings, accept any string format
-  created_at: z.string(),
-  updated_at: z.string(),
+  content: z.string().nullable().optional(),
+  error_message: z.string().nullable().optional(),
+  // Supabase returns timestamps as ISO strings or Date objects
+  created_at: z.union([z.string(), z.date()]).transform(val =>
+    typeof val === 'string' ? val : val.toISOString()
+  ),
+  updated_at: z.union([z.string(), z.date()]).transform(val =>
+    typeof val === 'string' ? val : val.toISOString()
+  ),
   lesson_type: z.string().nullable().optional(),
   is_json: z.boolean().nullable().optional(),
 });

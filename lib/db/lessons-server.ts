@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { Lesson, LessonStatus, LessonSchema, LessonsArraySchema } from '@/types/lesson';
+import { sanitizeLessonForLogging, safeError } from '@/lib/utils/logging';
 
 /**
  * Server-side: Create a new lesson with 'generating' status
@@ -85,26 +86,48 @@ export async function getAllLessons(): Promise<Lesson[]> {
     .order('created_at', { ascending: false });
 
   if (error) {
-    throw new Error(`Failed to get lessons: ${error.message}`);
+    console.error('[DB] Error fetching lessons');
+    console.error('[DB] Error details:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+
+    // Return empty array instead of throwing to prevent API crashes
+    console.warn('[DB] Returning empty array due to database error');
+    return [];
+  }
+
+  // Handle null/undefined data
+  if (!data) {
+    console.warn('[DB] No data returned from database, returning empty array');
+    return [];
   }
 
   // Validate response data with Zod schema
   try {
-    return LessonsArraySchema.parse(data || []);
+    return LessonsArraySchema.parse(data);
   } catch (validationError) {
     console.error('[DB] Lessons array validation failed:', validationError);
-    console.error('[DB] Raw data that failed validation:', JSON.stringify(data, null, 2));
+
+    // Log sanitized data to avoid massive HTML dumps
+    if (Array.isArray(data)) {
+      const sanitizedData = data.map(lesson => sanitizeLessonForLogging(lesson));
+      console.error('[DB] Raw data that failed validation (content sanitized):',
+        JSON.stringify(sanitizedData, null, 2));
+    }
 
     // In development, provide detailed error; in production, return empty array
     if (process.env.NODE_ENV === 'development') {
-      throw new Error(
-        `Database returned invalid lessons data: ${
+      console.error(
+        `[DB] Database returned invalid lessons data: ${
           validationError instanceof Error ? validationError.message : 'Unknown validation error'
         }`
       );
     }
 
-    // In production, log the error but return empty array to prevent crashes
+    // Return empty array instead of throwing to prevent crashes
     console.error('[DB] Returning empty array due to validation failure');
     return [];
   }

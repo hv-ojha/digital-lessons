@@ -55,6 +55,8 @@ export interface ImageGenerationResponse {
 export abstract class AIModelProvider {
   protected apiKey: string;
   protected modelName: string;
+  protected lastHealthCheck: Date | null = null;
+  protected isHealthy: boolean = true;
 
   constructor(apiKey: string, modelName: string) {
     if (!apiKey) {
@@ -77,11 +79,48 @@ export abstract class AIModelProvider {
   }
 
   /**
+   * Health check - verify provider is accessible
+   * Should be overridden by provider implementations for better performance
+   */
+  async healthCheck(): Promise<boolean> {
+    try {
+      // Simple test with minimal tokens
+      const response = await this.generateText({
+        prompt: 'test',
+        config: { maxOutputTokens: 10 },
+      });
+      this.isHealthy = !!response.text;
+      this.lastHealthCheck = new Date();
+      return this.isHealthy;
+    } catch (error) {
+      console.warn(`Health check failed for ${this.modelName}:`, error);
+      this.isHealthy = false;
+      this.lastHealthCheck = new Date();
+      return false;
+    }
+  }
+
+  /**
+   * Get health status
+   */
+  getHealthStatus(): { isHealthy: boolean; lastCheck: Date | null } {
+    return {
+      isHealthy: this.isHealthy,
+      lastCheck: this.lastHealthCheck,
+    };
+  }
+
+  /**
    * Get the current model name
    */
   getModelName(): string {
     return this.modelName;
   }
+
+  /**
+   * Get provider name (must be implemented by subclasses)
+   */
+  abstract getProviderName(): string;
 
   /**
    * Check if provider supports image generation
