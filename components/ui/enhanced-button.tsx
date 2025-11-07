@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, type HTMLMotionProps } from "framer-motion";
+import { motion, type HTMLMotionProps, type Variants } from "framer-motion";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +51,7 @@ const enhancedButtonVariants = cva(
 );
 
 // Animation variants for different button states
-const buttonAnimationVariants = {
+const buttonAnimationVariants: Variants = {
   rest: {
     scale: 1,
     y: 0,
@@ -82,7 +82,7 @@ const buttonAnimationVariants = {
 };
 
 // Professional button animations (subtle)
-const professionalAnimationVariants = {
+const professionalAnimationVariants: Variants = {
   rest: {
     scale: 1,
     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
