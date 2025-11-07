@@ -56,5 +56,8 @@ export interface LessonGenerationResult {
     lessonType?: string;
     approach?: string;
     generatedAt?: string;
+    correlationId?: string;
+    duration?: number;
+    tokens?: number;
   };
 }

@@ -27,6 +27,7 @@ import {
 import { AI_CONFIG } from './config';
 import { getModelProvider } from './models/factory';
 import { AIModelProvider } from './models/base';
+import { aiLogger, lessonLogger, generateCorrelationId } from '../observability/logger';
 
 // Initialize LangSmith client
 let langsmithClient: Client | null = null;
@@ -68,8 +69,12 @@ function estimateTokens(text: string): number {
  * Generate a lesson title from the outline
  */
 const generateLessonTitle = traceable(
-  async function generateLessonTitle(outline: string): Promise<string> {
+  async function generateLessonTitle(outline: string, correlationId?: string): Promise<string> {
+    const startTime = Date.now();
     const temperature = 0.7;
+    const operation = 'title_generation';
+    const provider = process.env.AI_PROVIDER || 'gemini';
+    const model = modelProvider.getModelName();
 
     const prompt = `You are a helpful assistant that creates short, engaging titles for educational lessons aimed at children. Keep titles under 60 characters and make them fun and engaging.
 
@@ -77,22 +82,61 @@ Create a short, fun title for this lesson outline: "${outline}"
 
 Return ONLY the title, nothing else.`;
 
-    console.log('📤 [TITLE] Generating title...');
-
-    const response = await modelProvider.generateText({
-      prompt,
-      config: { temperature },
+    aiLogger.callStarted({
+      provider,
+      model,
+      operation,
+      correlationId,
+      prompt: outline,
     });
 
-    const title = response.text?.trim() || 'Untitled Lesson';
-    console.log('✅ [TITLE] Generated:', title);
+    try {
+      const response = await modelProvider.generateText({
+        prompt,
+        config: { temperature },
+      });
 
-    return title;
+      const title = response.text?.trim() || 'Untitled Lesson';
+      const duration = Date.now() - startTime;
+
+      aiLogger.callCompleted({
+        provider,
+        model,
+        operation,
+        correlationId,
+        duration,
+        result: title,
+      });
+
+      return title;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+
+      aiLogger.callFailed({
+        provider,
+        model,
+        operation,
+        correlationId,
+        duration,
+        error: error as Error,
+      });
+
+      throw error;
+    }
   },
   {
     name: 'generate_lesson_title_json',
     run_type: 'llm',
     ...(langsmithClient ? { client: langsmithClient } : {}),
+    metadata: (inputs: any) => ({
+      provider: process.env.AI_PROVIDER || 'gemini',
+      model: modelProvider.getModelName(),
+      temperature: 0.7,
+      operation: 'title_generation',
+      correlationId: inputs.correlationId,
+      environment: process.env.NODE_ENV || 'development',
+      deployment: process.env.VERCEL_ENV || 'local',
+    }),
     tags: ['title-generation', 'json-approach', process.env.AI_PROVIDER || 'gemini'],
   }
 );
@@ -108,13 +152,31 @@ const generateLessonContent = traceable(
     title: string,
     retryCount = 0,
     previousError?: string,
-    previousJson?: string
+    previousJson?: string,
+    correlationId?: string
   ): Promise<LessonContent | FlexibleLesson> {
+    const startTime = Date.now();
     const temperature = 0.3;
     const maxTokens = 8192; // Increased from 4096 to prevent JSON truncation
+    const operation = 'lesson_content_generation';
+    const provider = process.env.AI_PROVIDER || 'gemini';
+    const model = modelProvider.getModelName();
 
     console.log(`\n🎨 Generating lesson JSON (Attempt ${retryCount + 1}/${MAX_RETRIES + 1})...`);
     console.log(`   Mode: Flexible/Creative (adapts to any prompt with inline SVG support)`);
+
+    // Log retry if applicable
+    if (retryCount > 0 && previousError) {
+      aiLogger.retryAttempt({
+        provider,
+        model,
+        operation,
+        correlationId,
+        retryCount,
+        maxRetries: MAX_RETRIES,
+        reason: previousError,
+      });
+    }
 
     // Build prompt - always use flexible/creative prompts
     const systemPrompt = getCreativeSystemPrompt();
@@ -122,6 +184,13 @@ const generateLessonContent = traceable(
 
     if (retryCount === 0) {
       userPrompt = getCreativeUserPrompt(outline, title);
+      aiLogger.callStarted({
+        provider,
+        model,
+        operation,
+        correlationId,
+        prompt: outline,
+      });
     } else {
       userPrompt = getCreativeRetryPrompt(outline, title, previousError!);
     }
@@ -165,7 +234,20 @@ const generateLessonContent = traceable(
         }
       }
     } catch (error) {
+      const duration = Date.now() - startTime;
       console.error(`❌ AI model call failed:`, error);
+
+      aiLogger.callFailed({
+        provider,
+        model,
+        operation,
+        correlationId,
+        duration,
+        error: error as Error,
+        retryCount,
+        willRetry: retryCount < MAX_RETRIES,
+      });
+
       throw new Error(`AI model call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
@@ -259,6 +341,13 @@ const generateLessonContent = traceable(
     if (!validation.isValid) {
       console.log(`❌ Schema validation failed:`, validation.error);
 
+      aiLogger.validationFailed({
+        operation,
+        correlationId,
+        validationErrors: [validation.error],
+        rawResponse: jsonText,
+      });
+
       if (retryCount < MAX_RETRIES) {
         console.log(`🔄 Retrying (${retryCount + 1}/${MAX_RETRIES})...\n`);
         return generateLessonContent(
@@ -266,7 +355,8 @@ const generateLessonContent = traceable(
           title,
           retryCount + 1,
           `Schema validation error: ${validation.error}`,
-          jsonText
+          jsonText,
+          correlationId
         );
       } else {
         throw new Error(`Schema validation failed after ${MAX_RETRIES} retries: ${validation.error}`);
@@ -274,6 +364,18 @@ const generateLessonContent = traceable(
     }
 
     console.log(`✅ Validation passed! Lesson type: ${validation.data!.type}`);
+    const duration = Date.now() - startTime;
+    const tokens = estimateTokens(jsonText);
+
+    aiLogger.callCompleted({
+      provider,
+      model,
+      operation,
+      correlationId,
+      duration,
+      tokens,
+      result: { lessonType: validation.data!.type, contentLength: jsonText.length },
+    });
 
     return validation.data!;
   },
@@ -292,6 +394,10 @@ const generateLessonContent = traceable(
       svg_generation: 'inline',
       approach: 'json-structured',
       token_optimization: 'enabled',
+      correlationId: inputs.correlationId,
+      environment: process.env.NODE_ENV || 'development',
+      deployment: process.env.VERCEL_ENV || 'local',
+      has_previous_error: !!inputs.previousError,
     }),
     tags: ['json-generation', 'lesson-creation', process.env.AI_PROVIDER || 'gemini'],
   }
@@ -301,33 +407,65 @@ const generateLessonContent = traceable(
  * Main function to generate a complete lesson using JSON approach
  */
 export const generateLessonJson = traceable(
-  async function generateLessonJsonMain(outline: string): Promise<LessonGenerationResult> {
+  async function generateLessonJsonMain(outline: string, lessonId?: string): Promise<LessonGenerationResult> {
     const startTime = Date.now();
+    const correlationId = generateCorrelationId();
 
     try {
       console.log(`\n🚀 Starting JSON-based lesson generation`);
+      console.log(`📊 Correlation ID: ${correlationId}`);
+      console.log(`📊 Lesson ID: ${lessonId || 'N/A'}`);
       console.log(`📊 Outline: "${outline}"`);
       console.log(`🎯 Approach: Structured JSON (80-90% token savings)`);
 
       // Step 1: Generate title
       console.log(`\n📌 Step 1: Generating title...`);
-      const title = await generateLessonTitle(outline);
+      const titleStartTime = Date.now();
+      const title = await generateLessonTitle(outline, correlationId);
+      const titleDuration = Date.now() - titleStartTime;
       console.log(`✅ Title: "${title}"`);
+
+      if (lessonId) {
+        aiLogger.callCompleted({
+          provider: process.env.AI_PROVIDER || 'gemini',
+          model: modelProvider.getModelName(),
+          operation: 'title_generation',
+          correlationId,
+          lessonId,
+          duration: titleDuration,
+          result: title,
+        });
+      }
 
       // Step 2: Generate structured JSON content
       console.log(`\n📌 Step 2: Generating JSON content...`);
-      const lessonContent = await generateLessonContent(outline, title);
+      const contentStartTime = Date.now();
+      const lessonContent = await generateLessonContent(outline, title, 0, undefined, undefined, correlationId);
+      const contentDuration = Date.now() - contentStartTime;
 
       // Convert to JSON string for storage
       const contentJson = JSON.stringify(lessonContent, null, 2);
 
       const duration = Date.now() - startTime;
+      const totalTokens = estimateTokens(contentJson);
 
       console.log(`\n🎉 Lesson generation completed!`);
       console.log(`📊 Title: "${title}"`);
       console.log(`📊 Type: ${lessonContent.type}`);
-      console.log(`📊 JSON size: ${contentJson.length} chars (~${estimateTokens(contentJson)} tokens)`);
+      console.log(`📊 JSON size: ${contentJson.length} chars (~${totalTokens} tokens)`);
       console.log(`📊 Duration: ${(duration / 1000).toFixed(2)}s\n`);
+
+      // Record lesson generation metrics
+      if (lessonId) {
+        lessonLogger.generationCompleted({
+          lessonId,
+          correlationId,
+          duration,
+          lessonType: lessonContent.type,
+          contentLength: contentJson.length,
+          tokens: totalTokens,
+        });
+      }
 
       return {
         success: true,
@@ -337,6 +475,9 @@ export const generateLessonJson = traceable(
           lessonType: lessonContent.type,
           approach: 'json-structured',
           generatedAt: new Date().toISOString(),
+          correlationId,
+          duration,
+          tokens: totalTokens,
         },
       };
     } catch (error) {
@@ -344,6 +485,15 @@ export const generateLessonJson = traceable(
 
       console.error('\n❌ Lesson generation failed:', error);
       console.error(`📊 Failed after: ${(duration / 1000).toFixed(2)}s\n`);
+
+      if (lessonId) {
+        lessonLogger.generationFailed({
+          lessonId,
+          correlationId,
+          duration,
+          error: error as Error,
+        });
+      }
 
       return {
         success: false,
@@ -356,7 +506,7 @@ export const generateLessonJson = traceable(
     name: 'generate_lesson_json_main',
     run_type: 'chain',
     ...(langsmithClient ? { client: langsmithClient } : {}),
-    metadata: {
+    metadata: (inputs: any) => ({
       provider: process.env.AI_PROVIDER || 'gemini',
       model: modelProvider.getModelName(),
       workflow: 'json_lesson_generation',
@@ -366,7 +516,12 @@ export const generateLessonJson = traceable(
       includes_json_gen: true,
       includes_validation: true,
       max_retry_attempts: MAX_RETRIES,
-    },
+      correlationId: inputs.correlationId,
+      lessonId: inputs.lessonId,
+      environment: process.env.NODE_ENV || 'development',
+      deployment: process.env.VERCEL_ENV || 'local',
+      outline_length: inputs.outline?.length || 0,
+    }),
     tags: ['json-lesson-generation', 'full-workflow', process.env.AI_PROVIDER || 'gemini'],
   }
 );

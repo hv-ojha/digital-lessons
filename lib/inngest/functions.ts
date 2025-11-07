@@ -16,6 +16,7 @@
 import { inngest } from './client';
 import { generateLessonJson } from '@/lib/ai/generator-json';
 import { updateLessonStatus, updateLessonWithContent } from '@/lib/db/lessons-server';
+import { inngestLogger, lessonLogger, errorLogger, generateCorrelationId } from '@/lib/observability/logger';
 
 /**
  * Background function to generate lesson content
@@ -35,10 +36,34 @@ export const generateLessonFunction = inngest.createFunction(
     retries: 2, // Retry up to 2 times on failure
   },
   { event: 'lesson/generate.requested' },
-  async ({ event, step }) => {
+  async ({ event, step, attempt }) => {
     const { lessonId, outline } = event.data;
+    const correlationId = generateCorrelationId();
+    const jobStartTime = Date.now();
+    const jobId = event.id || 'unknown';
+    const jobName = 'generate-lesson';
+
+    // Log job start with correlation ID
+    inngestLogger.jobStarted({
+      jobId,
+      jobName,
+      eventName: event.name,
+      correlationId,
+      lessonId,
+      eventData: { outline: outline.substring(0, 100), lessonId },
+    });
+
+    lessonLogger.generationStarted({
+      lessonId,
+      correlationId,
+      outline,
+      mode: 'async',
+    });
 
     console.log(`\n🎯 [INNGEST] Starting lesson generation for ${lessonId}`);
+    console.log(`📊 [INNGEST] Correlation ID: ${correlationId}`);
+    console.log(`📊 [INNGEST] Job ID: ${jobId}`);
+    console.log(`📊 [INNGEST] Attempt: ${attempt || 0}`);
     console.log(`📋 [INNGEST] Outline: "${outline}"`);
     console.log(`📊 [INNGEST] Outline analysis:`, {
       length: outline.length,
@@ -71,13 +96,26 @@ export const generateLessonFunction = inngest.createFunction(
     // Step 1: Generate lesson content using AI
     // LangSmith will trace all AI calls here!
     const result = await step.run('generate-ai-content', async () => {
+      const stepStartTime = Date.now();
+
+      inngestLogger.stepStarted({
+        jobId,
+        jobName,
+        stepName: 'generate-ai-content',
+        stepNumber: 1,
+        correlationId,
+        lessonId,
+      });
+
       console.log(`🤖 [INNGEST] Calling AI to generate lesson...`);
       console.log(`   Generator: JSON-based with flexible content`);
       console.log(`   This will create a trace tree in LangSmith:`);
 
       try {
-        // Use JSON generator with flexible content
-        const generationResult = await generateLessonJson(outline);
+        // Use JSON generator with flexible content, pass lessonId for tracking
+        const generationResult = await generateLessonJson(outline, lessonId);
+
+        const stepDuration = Date.now() - stepStartTime;
 
         console.log(`\n✅ [INNGEST] AI generation completed:`, {
           success: generationResult.success,
@@ -98,7 +136,25 @@ export const generateLessonFunction = inngest.createFunction(
             lessonType: generationResult.metadata?.lessonType || 'flexible',
             approach: generationResult.metadata?.approach || 'json-structured',
           });
+
+          lessonLogger.contentGenerated({
+            lessonId,
+            correlationId,
+            duration: stepDuration,
+            contentLength: contentSize,
+            lessonType: generationResult.metadata?.lessonType || 'flexible',
+          });
         }
+
+        inngestLogger.stepCompleted({
+          jobId,
+          jobName,
+          stepName: 'generate-ai-content',
+          stepNumber: 1,
+          correlationId,
+          lessonId,
+          duration: stepDuration,
+        });
 
         if (langsmithEnabled) {
           console.log(`\n🔍 [INNGEST] LangSmith trace created with rich metadata:`);
@@ -120,13 +176,44 @@ export const generateLessonFunction = inngest.createFunction(
 
         return generationResult;
       } catch (error) {
+        const stepDuration = Date.now() - stepStartTime;
         console.error(`❌ [INNGEST] AI generation failed:`, error);
+
+        inngestLogger.stepFailed({
+          jobId,
+          jobName,
+          stepName: 'generate-ai-content',
+          stepNumber: 1,
+          correlationId,
+          lessonId,
+          error: error as Error,
+        });
+
+        lessonLogger.generationFailed({
+          lessonId,
+          correlationId,
+          duration: stepDuration,
+          error: error as Error,
+          phase: 'ai_generation',
+        });
+
         throw error; // Inngest will retry
       }
     });
 
     // Step 2: Update database with result (title + content)
     await step.run('update-database', async () => {
+      const stepStartTime = Date.now();
+
+      inngestLogger.stepStarted({
+        jobId,
+        jobName,
+        stepName: 'update-database',
+        stepNumber: 2,
+        correlationId,
+        lessonId,
+      });
+
       console.log(`💾 [INNGEST] Updating database for lesson ${lessonId}...`);
 
       try {
@@ -140,6 +227,9 @@ export const generateLessonFunction = inngest.createFunction(
             result.metadata?.lessonType,
             true // Always JSON-based now
           );
+
+          const stepDuration = Date.now() - stepStartTime;
+
           console.log(`✅ [INNGEST] Database updated successfully`);
           console.log(`   Title: "${result.title}"`);
           console.log(`   Content length: ${result.content.length} chars`);
@@ -147,23 +237,79 @@ export const generateLessonFunction = inngest.createFunction(
             console.log(`   Lesson type: ${result.metadata.lessonType}`);
           }
           console.log(`   Format: JSON with flexible content`);
+
+          inngestLogger.stepCompleted({
+            jobId,
+            jobName,
+            stepName: 'update-database',
+            stepNumber: 2,
+            correlationId,
+            lessonId,
+            duration: stepDuration,
+          });
         } else {
           const errorMessage = result.error || 'Generation failed';
           await updateLessonStatus(lessonId, 'failed', undefined, errorMessage);
           console.error(`❌ [INNGEST] Generation failed: ${errorMessage}`);
+
+          inngestLogger.stepFailed({
+            jobId,
+            jobName,
+            stepName: 'update-database',
+            stepNumber: 2,
+            correlationId,
+            lessonId,
+            error: errorMessage,
+          });
         }
       } catch (error) {
+        const stepDuration = Date.now() - stepStartTime;
         console.error(`❌ [INNGEST] Database update failed:`, error);
+
+        inngestLogger.stepFailed({
+          jobId,
+          jobName,
+          stepName: 'update-database',
+          stepNumber: 2,
+          correlationId,
+          lessonId,
+          error: error as Error,
+        });
+
+        errorLogger.databaseError({
+          operation: 'updateLessonWithContent',
+          table: 'lessons',
+          correlationId,
+          lessonId,
+          error: error as Error,
+        });
+
         throw error; // Inngest will retry
       }
     });
 
+    const jobDuration = Date.now() - jobStartTime;
     console.log(`🎉 [INNGEST] Lesson ${lessonId} processing complete!`);
+
+    // Log job completion
+    inngestLogger.jobCompleted({
+      jobId,
+      jobName,
+      correlationId,
+      lessonId,
+      duration: jobDuration,
+      result: {
+        success: result.success,
+        contentLength: result.content?.length || 0,
+        lessonType: result.metadata?.lessonType,
+      },
+    });
 
     return {
       lessonId,
       success: result.success,
       contentLength: result.content?.length || 0,
+      correlationId,
     };
   }
 );
