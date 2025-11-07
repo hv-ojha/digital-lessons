@@ -9,6 +9,7 @@ import { BookOpen } from 'lucide-react';
 
 interface LessonTableProps {
   initialLessons: Lesson[];
+  viewMode?: "kid" | "parent";
 }
 
 /**
@@ -17,7 +18,7 @@ interface LessonTableProps {
  * - Implements useCallback hooks for stable function references
  * - Only re-renders cards that have changed
  */
-export function LessonTable({ initialLessons }: LessonTableProps) {
+export function LessonTable({ initialLessons, viewMode = "kid" }: LessonTableProps) {
   const [lessons, setLessons] = useState<Lesson[]>(initialLessons);
   const [retryingIds, setRetryingIds] = useState<Set<string>>(new Set());
   const [loadingLessonId, setLoadingLessonId] = useState<string | null>(null);
@@ -85,33 +86,63 @@ export function LessonTable({ initialLessons }: LessonTableProps) {
     }
   }, [router]);
 
-  // Empty state
+  // Empty state - Clean and Professional
   if (lessons.length === 0) {
     return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-playful p-12 text-center animate-bounce-in">
-        <div className="mb-6">
-          <BookOpen className="w-32 h-32 mx-auto text-purple-300 animate-float" />
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-700 p-16 text-center">
+        <div className="max-w-md mx-auto">
+          <div className="mb-6">
+            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center">
+              <BookOpen className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+            No lessons yet
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Get started by creating your first AI-powered lesson. Click the "Create New Lesson" button in the top navigation.
+          </p>
+          <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-500">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            <span>Look for the button at the top</span>
+          </div>
         </div>
-        <h3 className="font-display text-3xl font-bold text-gray-800 mb-4">
-          No Lessons Yet
-        </h3>
-        <p className="text-lg text-gray-600 max-w-md mx-auto leading-relaxed">
-          Create your first lesson above to get started on your amazing learning journey! 🚀
-        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <h2 className="font-display text-4xl font-bold gradient-text-magic mb-2">
-          Your Learning Adventures
-        </h2>
-        <p className="text-lg text-gray-600">
-          Click on any ready lesson to start learning! 🌟
-        </p>
+    <div className="space-y-6">
+      {/* Section Header - Clean and Simple */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Lessons</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'} total
+          </p>
+        </div>
+
+        {/* Stats Badges - Simplified */}
+        {lessons.length > 0 && (
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="w-2 h-2 bg-green-500 rounded-full" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                {lessons.filter(l => l.status === 'completed').length} Ready
+              </span>
+            </div>
+            {lessons.filter(l => l.status === 'generating').length > 0 && (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  {lessons.filter(l => l.status === 'generating').length} Creating
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Cards Grid - Using Memoized LessonCard Components */}
@@ -125,6 +156,7 @@ export function LessonTable({ initialLessons }: LessonTableProps) {
             onRetry={handleRetry}
             onRowClick={handleRowClick}
             animationDelay={index * 0.1}
+            viewMode={viewMode}
           />
         ))}
       </div>

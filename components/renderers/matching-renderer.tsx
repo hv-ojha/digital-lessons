@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import { MatchingLesson } from '@/types/lesson-content';
 import { LessonHeader } from './lesson-header';
-import { Button } from '@/components/ui/button';
-import { PlayfulBadge } from '@/components/ui/playful-badge';
 import { Link2, CheckCircle, RefreshCw, Sparkles, Trophy } from 'lucide-react';
 import Confetti from 'react-confetti';
 
@@ -75,7 +73,7 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
 
   if (isComplete) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
         {/* Confetti celebration */}
         {showConfetti && (
           <Confetti
@@ -96,60 +94,45 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
             score={100}
           />
 
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-playful-lg p-8 md:p-12 text-center space-y-8 animate-bounce-in">
-            {/* Sparky Mascot - Celebrating */}
-            <svg
-              viewBox="0 0 200 200"
-              className="w-32 h-32 mx-auto animate-tada"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <linearGradient id="matchingStarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#EC4899" />
-                  <stop offset="50%" stopColor="#F472B6" />
-                  <stop offset="100%" stopColor="#A855F7" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
-                fill="url(#matchingStarGradient)"
-                stroke="#DB2777"
-                strokeWidth="3"
-              />
-              <circle cx="85" cy="85" r="8" fill="white" />
-              <circle cx="115" cy="85" r="8" fill="white" />
-              <circle cx="87" cy="87" r="4" fill="#1F2937" />
-              <circle cx="117" cy="87" r="4" fill="#1F2937" />
-              {/* Big happy smile */}
-              <path d="M 75 100 Q 100 125 125 100" stroke="#1F2937" strokeWidth="4" strokeLinecap="round" fill="none" />
-            </svg>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-lg p-8 md:p-12 text-center space-y-8">
+            {/* Trophy Icon */}
+            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center">
+              <Trophy className="w-10 h-10 text-pink-600 dark:text-pink-400" />
+            </div>
 
-            <h1 className="font-display text-4xl md:text-5xl font-extrabold gradient-text-rainbow">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100">
               Perfect Match! 🎉
             </h1>
 
             <div className="space-y-4">
-              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-pink-100 to-purple-100 px-8 py-4 rounded-2xl">
-                <Trophy className="w-8 h-8 text-pink-600" />
-                <p className="text-4xl font-bold text-gray-800">{lesson.pairs.length} / {lesson.pairs.length}</p>
+              <div className="inline-flex items-center gap-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white px-8 py-4 rounded-xl shadow-lg">
+                <Trophy className="w-10 h-10" />
+                <div className="text-left">
+                  <p className="text-5xl font-bold">{lesson.pairs.length} / {lesson.pairs.length}</p>
+                  <p className="text-xl opacity-90">100% Correct</p>
+                </div>
               </div>
-              <p className="text-2xl font-semibold text-gray-700">100% Correct</p>
+
+              {/* Simple Progress Bar */}
+              <div className="max-w-md mx-auto">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-pink-500 to-purple-500" style={{ width: '100%' }} />
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">100% Complete</p>
+              </div>
             </div>
 
-            <div className="bg-gradient-to-r from-pink-100 to-rose-100 rounded-2xl p-6">
-              <p className="text-xl font-bold text-pink-700">Incredible! You matched all pairs perfectly! ⭐</p>
-            </div>
+            <p className="text-2xl font-bold text-pink-600 dark:text-pink-400">
+              Incredible! You matched all pairs perfectly! ⭐
+            </p>
 
-            <Button
+            <button
               onClick={handleReset}
-              variant="rainbow"
-              size="xl"
-              className="w-full max-w-md mx-auto"
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 inline-flex items-center gap-2"
             >
-              <RefreshCw className="w-5 h-5" />
+              <RefreshCw className="w-6 h-6" />
               Play Again
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -157,7 +140,7 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header with Back Button */}
         <LessonHeader
@@ -168,28 +151,35 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
 
         {/* Progress Badge */}
         <div className="flex justify-center">
-          <PlayfulBadge variant="rainbow" size="lg" icon={<Link2 className="w-5 h-5" />}>
-            {matches.size} of {lesson.pairs.length} Matched
-          </PlayfulBadge>
+          <div className="inline-flex items-center gap-2 px-6 py-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+            <Link2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <span className="font-semibold text-purple-800 dark:text-purple-300">
+              {matches.size} of {lesson.pairs.length} Matched
+            </span>
+          </div>
         </div>
 
         {/* Instructions */}
-        <div className={`p-6 rounded-2xl border-2 flex gap-4 items-center shadow-playful animate-bounce-in ${
+        <div className={`p-6 rounded-xl border-2 flex gap-4 items-center shadow-lg ${
           selectedLeft === null
-            ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300'
-            : 'bg-gradient-to-r from-pink-100 to-rose-100 border-pink-300'
+            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+            : 'bg-pink-50 dark:bg-pink-900/20 border-pink-300 dark:border-pink-700'
         }`}>
           <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-            selectedLeft === null ? 'bg-blue-200' : 'bg-pink-200'
+            selectedLeft === null
+              ? 'bg-blue-100 dark:bg-blue-900/30'
+              : 'bg-pink-100 dark:bg-pink-900/30'
           }`}>
             {selectedLeft === null ? (
-              <Sparkles className="w-7 h-7 text-blue-700" />
+              <Sparkles className="w-7 h-7 text-blue-700 dark:text-blue-400" />
             ) : (
-              <Link2 className="w-7 h-7 text-pink-700" />
+              <Link2 className="w-7 h-7 text-pink-700 dark:text-pink-400" />
             )}
           </div>
-          <p className={`text-lg font-bold ${
-            selectedLeft === null ? 'text-blue-800' : 'text-pink-800'
+          <p className={`text-lg font-semibold ${
+            selectedLeft === null
+              ? 'text-blue-800 dark:text-blue-300'
+              : 'text-pink-800 dark:text-pink-300'
           }`}>
             {selectedLeft === null
               ? '👈 Click an item on the left to start matching'
@@ -202,9 +192,11 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
           {/* Left Column */}
           <div className="space-y-3">
             <div className="text-center mb-4">
-              <PlayfulBadge variant="magic" size="md">
-                Choose from here
-              </PlayfulBadge>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                <span className="text-sm font-semibold text-purple-800 dark:text-purple-300">
+                  Choose from here
+                </span>
+              </div>
             </div>
             {lesson.pairs.map((pair, index) => {
               const isMatched = matches.has(index);
@@ -215,18 +207,18 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
                   key={index}
                   onClick={() => handleLeftClick(index)}
                   disabled={isMatched}
-                  className={`w-full p-5 rounded-2xl text-left text-base md:text-lg transition-all duration-200 transform flex items-center gap-3 ${
+                  className={`w-full p-5 rounded-xl text-left text-base md:text-lg transition-all duration-200 transform flex items-center gap-3 ${
                     isMatched
-                      ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white border-2 border-green-600 cursor-not-allowed shadow-playful-lg scale-105'
+                      ? 'bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100 border-2 border-green-300 dark:border-green-700 cursor-not-allowed shadow-lg scale-105'
                       : isSelected
-                      ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white border-2 border-pink-600 shadow-lg scale-105'
-                      : 'bg-white border-2 border-gray-300 text-gray-800 hover:bg-gradient-to-br hover:from-pink-100 hover:to-rose-100 hover:border-pink-400 hover:scale-105 hover:shadow-md cursor-pointer'
+                      ? 'bg-pink-50 dark:bg-pink-900/20 text-pink-900 dark:text-pink-100 border-2 border-pink-300 dark:border-pink-700 shadow-lg scale-105'
+                      : 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-pink-50 dark:hover:bg-pink-900/20 hover:border-pink-400 dark:hover:border-pink-600 hover:scale-105 hover:shadow-md cursor-pointer'
                   }`}
                 >
                   {isMatched && (
-                    <CheckCircle className="w-6 h-6 text-white animate-bounce-in" />
+                    <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400 transition-transform duration-200" />
                   )}
-                  <span className="flex-1 font-body">{pair.left}</span>
+                  <span className="flex-1 font-semibold">{pair.left}</span>
                 </button>
               );
             })}
@@ -235,9 +227,11 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
           {/* Right Column */}
           <div className="space-y-3">
             <div className="text-center mb-4">
-              <PlayfulBadge variant="achievement" size="md">
-                Match it here
-              </PlayfulBadge>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <span className="text-sm font-semibold text-yellow-800 dark:text-yellow-300">
+                  Match it here
+                </span>
+              </div>
             </div>
             {shuffledRight.map((right, index) => {
               const isMatched = Array.from(matches.values()).includes(index);
@@ -247,18 +241,18 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
                   key={index}
                   onClick={() => handleRightClick(index)}
                   disabled={isMatched || selectedLeft === null}
-                  className={`w-full p-5 rounded-2xl text-left text-base md:text-lg transition-all duration-200 transform flex items-center gap-3 ${
+                  className={`w-full p-5 rounded-xl text-left text-base md:text-lg transition-all duration-200 transform flex items-center gap-3 ${
                     isMatched
-                      ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white border-2 border-green-600 cursor-not-allowed shadow-playful-lg scale-105'
+                      ? 'bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100 border-2 border-green-300 dark:border-green-700 cursor-not-allowed shadow-lg scale-105'
                       : selectedLeft !== null
-                      ? 'bg-white border-2 border-gray-300 text-gray-800 hover:bg-gradient-to-br hover:from-yellow-100 hover:to-orange-100 hover:border-yellow-400 hover:scale-105 hover:shadow-md cursor-pointer'
-                      : 'bg-gray-100 border-2 border-gray-200 text-gray-400 opacity-60 cursor-not-allowed'
+                      ? 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:border-yellow-400 dark:hover:border-yellow-600 hover:scale-105 hover:shadow-md cursor-pointer'
+                      : 'bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 opacity-60 cursor-not-allowed'
                   }`}
                 >
                   {isMatched && (
-                    <CheckCircle className="w-6 h-6 text-white animate-bounce-in" />
+                    <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400 transition-transform duration-200" />
                   )}
-                  <span className="flex-1 font-body">{right}</span>
+                  <span className="flex-1 font-semibold">{right}</span>
                 </button>
               );
             })}

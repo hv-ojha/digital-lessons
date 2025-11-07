@@ -61,6 +61,48 @@
 
     /* Refined Radius */
     --radius: 0.75rem;
+
+    /* ========================================
+       ENHANCED GRADIENTS FOR DUAL AUDIENCE
+       ======================================== */
+
+    /* Achievement & Success Gradients */
+    --gradient-achievement: linear-gradient(135deg, #FFD700 0%, #FFAA00 100%);
+    --gradient-success-sparkle: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+    --gradient-trophy: linear-gradient(135deg, #F59E0B 0%, #FBBF24 50%, #FCD34D 100%);
+
+    /* Learning & Progress Gradients */
+    --gradient-progress: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+    --gradient-energy: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 50%, #C084FC 100%);
+    --gradient-curiosity: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+
+    /* Parent Trust Gradients */
+    --gradient-trust: linear-gradient(135deg, #1E40AF 0%, #06B6D4 100%);
+    --gradient-professional: linear-gradient(135deg, #475569 0%, #64748B 100%);
+    --gradient-safety: linear-gradient(135deg, #059669 0%, #10B981 100%);
+
+    /* Celebration Gradients */
+    --gradient-celebration: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 25%, #6BCF7F 50%, #4D96FF 75%, #C77DFF 100%);
+    --gradient-rainbow: linear-gradient(90deg, #E63946 0%, #F77F00 15%, #FCBF49 30%, #06D6A0 50%, #118AB2 65%, #8B5CF6 80%, #EC4899 100%);
+
+    /* Engagement Gradients for Kids */
+    --gradient-magic: linear-gradient(135deg, #8B5CF6 0%, #EC4899 50%, #3B82F6 100%);
+    --gradient-sunshine: linear-gradient(135deg, #FBBF24 0%, #FB923C 50%, #F97316 100%);
+    --gradient-ocean: linear-gradient(135deg, #06B6D4 0%, #0EA5E9 50%, #3B82F6 100%);
+    --gradient-forest: linear-gradient(135deg, #10B981 0%, #34D399 50%, #6EE7B7 100%);
+    --gradient-sunset: linear-gradient(135deg, #F59E0B 0%, #FB923C 50%, #EC4899 100%);
+
+    /* Elevation & Depth */
+    --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --elevation-2: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --elevation-float: 0 12px 40px rgba(0, 0, 0, 0.15);
+    --elevation-playful: 0 10px 25px -5px rgba(139, 92, 246, 0.3), 0 8px 10px -6px rgba(236, 72, 153, 0.2);
+    --elevation-playful-lg: 0 20px 40px -10px rgba(139, 92, 246, 0.4), 0 15px 20px -8px rgba(236, 72, 153, 0.3);
+
+    /* Spacing System */
+    --spacing-comfortable: 1.5rem;
+    --spacing-generous: 2.5rem;
   }
 
   .dark {
@@ -452,5 +494,106 @@ html {
 
   .quiz-option-wrong {
     @apply quiz-option border-red-400 bg-red-50;
+  }
+
+  /* Enhanced Typography for Dual Audience */
+  .heading-kid-hero {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .text-kid-body {
+    font-family: 'Nunito', sans-serif;
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+  }
+
+  .heading-parent {
+    font-family: var(--font-body);
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
+  .text-parent-body {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: hsl(220, 13%, 28%);
+  }
+
+  /* Enhanced Card Styles with Elevation System */
+  .card-enhanced {
+    @apply bg-card rounded-2xl p-6 md:p-8 lg:p-10;
+    box-shadow: var(--elevation-2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-enhanced:hover {
+    box-shadow: var(--elevation-3);
+    transform: translateY(-4px);
+  }
+
+  .card-elevated-float {
+    @apply bg-card rounded-3xl p-8 md:p-10;
+    box-shadow: var(--elevation-float);
+  }
+
+  /* Gradient Background Utilities */
+  .bg-gradient-achievement {
+    background: var(--gradient-achievement);
+  }
+
+  .bg-gradient-progress {
+    background: var(--gradient-progress);
+  }
+
+  .bg-gradient-trust {
+    background: var(--gradient-trust);
+  }
+
+  .bg-gradient-celebration {
+    background: var(--gradient-celebration);
+  }
+
+  .bg-gradient-magic {
+    background: var(--gradient-magic);
+  }
+
+  .bg-gradient-sunshine {
+    background: var(--gradient-sunshine);
+  }
+
+  .bg-gradient-ocean {
+    background: var(--gradient-ocean);
+  }
+
+  .bg-gradient-forest {
+    background: var(--gradient-forest);
+  }
+
+  .bg-gradient-rainbow {
+    background: var(--gradient-rainbow);
+  }
+
+  /* Elevation Utilities */
+  .elevation-1 {
+    box-shadow: var(--elevation-1);
+  }
+
+  .elevation-2 {
+    box-shadow: var(--elevation-2);
+  }
+
+  .elevation-3 {
+    box-shadow: var(--elevation-3);
+  }
+
+  .elevation-float {
+    box-shadow: var(--elevation-float);
   }
 }

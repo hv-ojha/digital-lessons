@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Sparkles, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface LessonHeaderProps {
   title: string;
@@ -14,6 +13,13 @@ interface LessonHeaderProps {
   score?: number;
 }
 
+/**
+ * Clean Lesson Header Component - Following UX Best Practices
+ * - Simple border-based card design
+ * - Clear visual hierarchy
+ * - Minimal gradients (only for brand icon)
+ * - Content-focused design
+ */
 export function LessonHeader({ title, description, progress, score }: LessonHeaderProps) {
   const router = useRouter();
 
@@ -24,76 +30,33 @@ export function LessonHeader({ title, description, progress, score }: LessonHead
   const isComplete = progress && progress.current === progress.total;
 
   return (
-    <div className="bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-3xl shadow-playful-lg p-6 md:p-8 animate-slide-in-up">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 shadow-lg p-6 md:p-8">
       <div className="flex flex-col gap-4">
         {/* Back Button */}
-        <Button
+        <button
           onClick={handleBack}
-          variant="outline"
-          size="default"
-          className="self-start bg-white/80 border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-500 hover:text-purple-800 transition-all duration-200 hover:-translate-x-1 font-semibold shadow-sm"
+          className="self-start inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg border-2 border-gray-300 dark:border-gray-600 transition-all duration-200 hover:-translate-x-1"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to Lessons
-        </Button>
+        </button>
 
-        {/* Title with Sparky */}
+        {/* Title Section */}
         <div className="flex items-start gap-4">
-          {/* Sparky Mascot */}
+          {/* Brand Icon */}
           <div className="flex-shrink-0">
-            <svg
-              viewBox="0 0 200 200"
-              className={`w-16 h-16 md:w-20 md:h-20 ${isComplete ? 'animate-tada' : 'animate-float'}`}
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <linearGradient id="starGradientHeader" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#8B5CF6" />
-                  <stop offset="50%" stopColor="#EC4899" />
-                  <stop offset="100%" stopColor="#FBBF24" />
-                </linearGradient>
-              </defs>
-              {/* Star Body */}
-              <path
-                d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
-                fill="url(#starGradientHeader)"
-                stroke="#7C3AED"
-                strokeWidth="3"
-              />
-              {/* Eyes */}
-              <circle cx="85" cy="85" r="8" fill="white" />
-              <circle cx="115" cy="85" r="8" fill="white" />
-              <circle cx="87" cy="87" r="4" fill="#1F2937" />
-              <circle cx="117" cy="87" r="4" fill="#1F2937" />
-              {/* Mouth - Happy if complete, encouraging otherwise */}
-              {isComplete ? (
-                <path
-                  d="M 75 100 Q 100 125 125 100"
-                  stroke="#1F2937"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              ) : (
-                <path
-                  d="M 80 105 Q 100 120 120 105"
-                  stroke="#1F2937"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              )}
-            </svg>
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-white" />
+            </div>
           </div>
 
           {/* Title and Description */}
           <div className="flex-1">
-            <h1 className="font-display text-3xl md:text-5xl font-extrabold gradient-text-magic mb-2 leading-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">
               {title}
             </h1>
             {description && (
-              <p className="text-gray-700 text-base md:text-lg leading-relaxed">
+              <p className="text-gray-600 dark:text-gray-400 text-base md:text-lg leading-relaxed">
                 {description}
               </p>
             )}
@@ -102,21 +65,21 @@ export function LessonHeader({ title, description, progress, score }: LessonHead
 
         {/* Progress Info */}
         {progress && (
-          <div className="flex items-center justify-between bg-white/60 backdrop-blur-sm rounded-2xl px-6 py-4 border-2 border-purple-200">
+          <div className="flex items-center justify-between bg-purple-50 dark:bg-purple-900/20 rounded-lg px-6 py-4 border border-purple-200 dark:border-purple-800">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-purple-600" />
-              <p className="text-base font-bold text-gray-800">
+              <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <p className="text-base font-bold text-gray-800 dark:text-gray-200">
                 {isComplete ? (
-                  <span className="gradient-text-success">Complete! 🎉</span>
+                  <span className="text-green-600 dark:text-green-400">Complete! 🎉</span>
                 ) : (
                   `${progress.current} of ${progress.total} answered`
                 )}
               </p>
             </div>
             {score !== undefined && (
-              <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-400 px-4 py-2 rounded-full">
-                <Star className="w-5 h-5 text-gray-900 fill-gray-900" />
-                <p className="text-base font-bold text-gray-900">
+              <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 px-4 py-2 rounded-lg">
+                <Star className="w-5 h-5 text-yellow-600 dark:text-yellow-400 fill-yellow-600 dark:fill-yellow-400" />
+                <p className="text-base font-bold text-yellow-800 dark:text-yellow-300">
                   {score} points
                 </p>
               </div>
@@ -126,8 +89,8 @@ export function LessonHeader({ title, description, progress, score }: LessonHead
 
         {/* Score Badge (if no progress) */}
         {!progress && score !== undefined && (
-          <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 px-4 py-2 rounded-full font-bold shadow-md self-start">
-            <Star className="w-5 h-5 fill-gray-900" />
+          <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300 px-4 py-2 rounded-lg font-bold self-start">
+            <Star className="w-5 h-5 fill-yellow-600 dark:fill-yellow-400 text-yellow-600 dark:text-yellow-400" />
             <span>Score: {score}</span>
           </div>
         )}
