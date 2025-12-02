@@ -12,6 +12,7 @@ import {
   AIModelProvider,
   GenerationRequest,
   GenerationResponse,
+  StreamGenerationRequest,
   ModelCapabilities,
 } from './base';
 
@@ -92,6 +93,102 @@ export class OpenAIModelProvider extends AIModelProvider {
       console.error('❌ OpenAI API call failed:', error);
       throw new Error(
         `OpenAI generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Generate text with streaming support using OpenAI
+   */
+  async generateTextStream(request: StreamGenerationRequest): Promise<GenerationResponse> {
+    await this.ensureClient();
+
+    const { prompt, systemPrompt, config, onChunk } = request;
+
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+    if (systemPrompt) {
+      messages.push({ role: 'system', content: systemPrompt });
+    }
+    messages.push({ role: 'user', content: prompt });
+
+    let accumulatedText = '';
+    let finishReason = 'stop';
+    let inputTokens = 0;
+    let outputTokens = 0;
+
+    try {
+      const stream = await this.client.chat.completions.create({
+        model: this.modelName,
+        messages,
+        temperature: config?.temperature ?? 0.7,
+        max_tokens: config?.maxOutputTokens,
+        top_p: config?.topP,
+        stream: true,
+      });
+
+      // Process each chunk from the stream
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta;
+        const chunkText = delta?.content || '';
+
+        // Accumulate text
+        accumulatedText += chunkText;
+
+        // Check finish reason
+        if (chunk.choices[0]?.finish_reason) {
+          finishReason = chunk.choices[0].finish_reason;
+        }
+
+        // Call the chunk callback
+        await onChunk({
+          text: chunkText,
+          isComplete: false,
+          finishReason: undefined,
+        });
+      }
+
+      // Warn if response was truncated
+      if (finishReason === 'length') {
+        console.warn('⚠️  [OPENAI STREAM] Response was truncated due to token limit!');
+        console.warn(`   Requested max_tokens: ${config?.maxOutputTokens}`);
+        console.warn(`   Response length: ${accumulatedText.length} chars (~${this.estimateTokens(accumulatedText)} tokens)`);
+      }
+
+      // Send final chunk with completion flag
+      await onChunk({
+        text: '',
+        isComplete: true,
+        finishReason,
+      });
+
+      // Estimate tokens (OpenAI streaming doesn't return exact usage)
+      inputTokens = this.estimateTokens(
+        messages.map((m) => m.content).join('\n')
+      );
+      outputTokens = this.estimateTokens(accumulatedText);
+
+      return {
+        text: accumulatedText,
+        model: this.modelName,
+        tokensUsed: {
+          input: inputTokens,
+          output: outputTokens,
+          total: inputTokens + outputTokens,
+        },
+        finishReason,
+      };
+    } catch (error) {
+      console.error('❌ OpenAI streaming failed:', error);
+
+      // Send error completion
+      await onChunk({
+        text: '',
+        isComplete: true,
+        finishReason: 'error',
+      });
+
+      throw new Error(
+        `OpenAI streaming failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }

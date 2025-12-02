@@ -66,6 +66,104 @@ function estimateTokens(text: string): number {
 }
 
 /**
+ * Extract JSON from text (removes markdown code blocks)
+ */
+function extractJsonFromText(text: string): string {
+  let jsonText = text?.trim() || '';
+
+  // Clean up response - remove markdown code blocks if present
+  jsonText = jsonText.replace(/```json\s*\n?/g, '').replace(/```\s*$/g, '').trim();
+
+  return jsonText;
+}
+
+/**
+ * Parse and validate JSON response
+ */
+function parseAndValidateJson(jsonText: string, outline: string): {
+  isValid: boolean;
+  data?: LessonContent | FlexibleLesson;
+  error?: string
+} {
+  console.log(`📝 Parsing and validating JSON...`);
+  console.log(`📝 Received JSON (${jsonText.length} chars, ~${estimateTokens(jsonText)} tokens)`);
+
+  // Log first and last parts for debugging
+  if (jsonText.length > 0) {
+    console.log(`   First 100 chars: "${jsonText.substring(0, 100)}..."`);
+    console.log(`   Last 100 chars: "...${jsonText.slice(-100)}"`);
+  }
+
+  // Check if JSON appears truncated
+  const isTruncated = !jsonText.trim().endsWith('}') && !jsonText.trim().endsWith(']');
+  if (isTruncated) {
+    console.warn(`⚠️  JSON appears to be truncated (doesn't end with } or ])`);
+    console.warn(`   Last 50 chars: "${jsonText.slice(-50)}"`);
+  }
+
+  // Check for empty response
+  if (!jsonText || jsonText.length === 0) {
+    console.error(`❌ Empty response from AI model!`);
+    return {
+      isValid: false,
+      error: 'AI returned empty response'
+    };
+  }
+
+  // Parse JSON
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(jsonText);
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Invalid JSON';
+    console.error(`❌ JSON parsing failed:`, errorMsg);
+
+    // Check if it's a truncation error
+    if (errorMsg.includes('Unterminated string') || errorMsg.includes('Unexpected end')) {
+      console.error(`⚠️  JSON was truncated!`);
+      console.error(`   Received ${jsonText.length} chars (~${estimateTokens(jsonText)} tokens)`);
+      console.error(`   This indicates the response was cut off mid-JSON`);
+
+      // Show where it failed
+      if (error instanceof SyntaxError && error.message.includes('position')) {
+        const match = error.message.match(/position (\d+)/);
+        if (match) {
+          const pos = parseInt(match[1]);
+          console.error(`   Error at position ${pos}:`);
+          console.error(`   Context: "...${jsonText.substring(Math.max(0, pos - 50), Math.min(jsonText.length, pos + 50))}..."`);
+        }
+      }
+    }
+
+    // Log the problematic JSON for debugging (truncated to avoid console spam)
+    console.error(`   Problematic JSON (first 500 chars): "${jsonText.substring(0, 500)}..."`);
+    console.error(`   Problematic JSON (last 500 chars): "...${jsonText.slice(-500)}"`);
+
+    return {
+      isValid: false,
+      error: `JSON parsing failed: ${errorMsg}`
+    };
+  }
+
+  // Validate against flexible content schema
+  const validation = validateFlexibleLesson(parsedJson);
+
+  if (!validation.isValid) {
+    console.error(`❌ Validation failed:`, validation.error);
+    return {
+      isValid: false,
+      error: validation.error
+    };
+  }
+
+  console.log(`✅ JSON validation successful!`);
+  return {
+    isValid: true,
+    data: validation.data
+  };
+}
+
+/**
  * Generate a lesson title from the outline
  */
 const generateLessonTitle = traceable(
@@ -251,92 +349,9 @@ const generateLessonContent = traceable(
       throw new Error(`AI model call failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
-    let jsonText = response.text?.trim() || '';
-
-    // Clean up response - remove markdown code blocks if present
-    jsonText = jsonText.replace(/```json\s*\n?/g, '').replace(/```\s*$/g, '').trim();
-
-    console.log(`📝 Received JSON (${jsonText.length} chars, ~${estimateTokens(jsonText)} tokens)`);
-
-    // Log first and last parts for debugging
-    if (jsonText.length > 0) {
-      console.log(`   First 100 chars: "${jsonText.substring(0, 100)}..."`);
-      console.log(`   Last 100 chars: "...${jsonText.slice(-100)}"`);
-    }
-
-    // Check if JSON appears truncated (common sign: doesn't end with })
-    const isTruncated = !jsonText.trim().endsWith('}') && !jsonText.trim().endsWith(']');
-    if (isTruncated) {
-      console.warn(`⚠️  JSON appears to be truncated (doesn't end with } or ])`);
-      console.warn(`   Last 50 chars: "${jsonText.slice(-50)}"`);
-    }
-
-    // Check for empty response
-    if (!jsonText || jsonText.length === 0) {
-      console.error(`❌ Empty response from AI model!`);
-      console.error(`   Response object:`, response);
-
-      if (retryCount < MAX_RETRIES) {
-        console.log(`🔄 Retrying due to empty response (${retryCount + 1}/${MAX_RETRIES})...\n`);
-        return generateLessonContent(
-          outline,
-          title,
-          retryCount + 1,
-          `Previous response was empty. Please generate complete valid JSON.`,
-          ''
-        );
-      } else {
-        throw new Error(`AI returned empty response after ${MAX_RETRIES} retries`);
-      }
-    }
-
-    // Parse and validate JSON
-    console.log(`📝 Parsing and validating JSON...`);
-    let parsedJson: unknown;
-    try {
-      parsedJson = JSON.parse(jsonText);
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Invalid JSON';
-      console.error(`❌ JSON parsing failed:`, errorMsg);
-
-      // Check if it's a truncation error
-      if (errorMsg.includes('Unterminated string') || errorMsg.includes('Unexpected end')) {
-        console.error(`⚠️  JSON was truncated! Current maxTokens: ${maxTokens}`);
-        console.error(`   Received ${jsonText.length} chars (~${estimateTokens(jsonText)} tokens)`);
-        console.error(`   This indicates the response was cut off mid-JSON`);
-
-        // Show where it failed
-        if (error instanceof SyntaxError && error.message.includes('position')) {
-          const match = error.message.match(/position (\d+)/);
-          if (match) {
-            const pos = parseInt(match[1]);
-            console.error(`   Error at position ${pos}:`);
-            console.error(`   Context: "...${jsonText.substring(Math.max(0, pos - 50), Math.min(jsonText.length, pos + 50))}..."`);
-          }
-        }
-      }
-
-      // Log the problematic JSON for debugging (truncated to avoid console spam)
-      console.error(`   Problematic JSON (first 500 chars): "${jsonText.substring(0, 500)}..."`);
-      console.error(`   Problematic JSON (last 500 chars): "...${jsonText.slice(-500)}"`)
-
-      if (retryCount < MAX_RETRIES) {
-        console.log(`🔄 Retrying with same maxTokens (${retryCount + 1}/${MAX_RETRIES})...\n`);
-        return generateLessonContent(
-          outline,
-          title,
-          retryCount + 1,
-          `JSON parsing error (possibly truncated): ${errorMsg}. Please ensure the JSON is complete and valid.`,
-          jsonText
-        );
-      } else {
-        throw new Error(`JSON parsing failed after ${MAX_RETRIES} retries: ${errorMsg}. Last response was ${jsonText.length} chars.`);
-      }
-    }
-
-    // Validate against flexible content schema (always)
-    let validation: { isValid: boolean; data?: LessonContent | FlexibleLesson; error?: string };
-    validation = validateFlexibleLesson(parsedJson);
+    // Extract and parse JSON using helper functions
+    const jsonText = extractJsonFromText(response.text || '');
+    const validation = parseAndValidateJson(jsonText, outline);
 
     if (!validation.isValid) {
       console.log(`❌ Schema validation failed:`, validation.error);
@@ -443,8 +458,8 @@ export const generateLessonJson = traceable(
       const lessonContent = await generateLessonContent(outline, title, 0, undefined, undefined, correlationId);
       const contentDuration = Date.now() - contentStartTime;
 
-      // Convert to JSON string for storage
-      const contentJson = JSON.stringify(lessonContent, null, 2);
+      // Convert to JSON string for storage (compact format to save tokens)
+      const contentJson = JSON.stringify(lessonContent);
 
       const duration = Date.now() - startTime;
       const totalTokens = estimateTokens(contentJson);
@@ -523,5 +538,193 @@ export const generateLessonJson = traceable(
       outline_length: inputs.outline?.length || 0,
     }),
     tags: ['json-lesson-generation', 'full-workflow', process.env.AI_PROVIDER || 'gemini'],
+  }
+);
+
+/**
+ * Progress callback for streaming
+ */
+export type StreamProgressCallback = (progress: {
+  stage: 'title' | 'content' | 'validating' | 'complete' | 'error';
+  percentage: number;
+  message: string;
+  partialContent?: string;
+  isComplete: boolean;
+  error?: string;
+}) => void | Promise<void>;
+
+/**
+ * Generate lesson content with streaming support
+ * Provides real-time progress updates as content is generated
+ */
+export const generateLessonJsonStream = traceable(
+  async function generateLessonJsonStream(
+    outline: string,
+    onProgress: StreamProgressCallback,
+    lessonId?: string
+  ): Promise<LessonGenerationResult> {
+    const startTime = Date.now();
+    const correlationId = generateCorrelationId();
+    let accumulatedContent = '';
+
+    try {
+      console.log(`\n🚀 Starting STREAMING lesson generation`);
+      console.log(`📊 Correlation ID: ${correlationId}`);
+      console.log(`📊 Lesson ID: ${lessonId || 'N/A'}`);
+
+      // Step 1: Generate title (no streaming needed - fast)
+      await onProgress({
+        stage: 'title',
+        percentage: 10,
+        message: 'Generating lesson title...',
+        isComplete: false,
+      });
+
+      const title = await generateLessonTitle(outline, correlationId);
+      console.log(`✅ Title: "${title}"`);
+
+      await onProgress({
+        stage: 'title',
+        percentage: 20,
+        message: `Title generated: "${title}"`,
+        isComplete: false,
+      });
+
+      // Step 2: Stream lesson content generation
+      await onProgress({
+        stage: 'content',
+        percentage: 25,
+        message: 'Starting lesson content generation...',
+        isComplete: false,
+      });
+
+      const systemPrompt = getCreativeSystemPrompt();
+      const userPrompt = getCreativeUserPrompt(outline, title);
+      const maxTokens = 32768; // Use higher limit for streaming
+
+      console.log(`🔄 Streaming AI model call...`);
+      console.log(`   Model: ${modelProvider.getModelName()}`);
+      console.log(`   Max output: ${maxTokens} tokens`);
+
+      let estimatedProgress = 30;
+
+      const response = await modelProvider.generateTextStream({
+        prompt: userPrompt,
+        systemPrompt: systemPrompt,
+        config: {
+          temperature: 0.3,
+          maxOutputTokens: maxTokens,
+        },
+        onChunk: async (chunk) => {
+          if (!chunk.isComplete) {
+            accumulatedContent += chunk.text;
+
+            // Update progress based on content length
+            // Estimate: 6000 chars ≈ 100% for typical lessons
+            const contentPercentage = Math.min(
+              90,
+              30 + Math.floor((accumulatedContent.length / 6000) * 60)
+            );
+
+            if (contentPercentage > estimatedProgress) {
+              estimatedProgress = contentPercentage;
+              await onProgress({
+                stage: 'content',
+                percentage: estimatedProgress,
+                message: `Generating content... (${accumulatedContent.length} characters)`,
+                partialContent: accumulatedContent,
+                isComplete: false,
+              });
+            }
+          } else {
+            // Streaming complete
+            console.log(`✅ Streaming complete (${accumulatedContent.length} chars)`);
+            console.log(`   Finish reason: ${chunk.finishReason}`);
+          }
+        },
+      });
+
+      // Step 3: Validate the JSON
+      await onProgress({
+        stage: 'validating',
+        percentage: 92,
+        message: 'Validating lesson content...',
+        isComplete: false,
+      });
+
+      const jsonText = extractJsonFromText(response.text);
+      const lessonContent = parseAndValidateJson(jsonText, outline);
+
+      if (lessonContent.error) {
+        throw new Error(lessonContent.error);
+      }
+
+      // Success!
+      const duration = Date.now() - startTime;
+      const contentJson = JSON.stringify(lessonContent.data);
+      const lessonType = (lessonContent.data as any)?.type || 'flexible';
+
+      await onProgress({
+        stage: 'complete',
+        percentage: 100,
+        message: 'Lesson generated successfully!',
+        partialContent: contentJson,
+        isComplete: true,
+      });
+
+      if (lessonId) {
+        lessonLogger.generationCompleted({
+          lessonId,
+          correlationId,
+          duration,
+          title,
+          lessonType,
+          contentLength: contentJson.length,
+          tokens: estimateTokens(contentJson),
+          provider: process.env.AI_PROVIDER || 'gemini',
+          model: modelProvider.getModelName(),
+        });
+      }
+
+      return {
+        success: true,
+        title,
+        content: contentJson,
+      };
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+      console.error(`❌ Streaming generation failed:`, error);
+
+      await onProgress({
+        stage: 'error',
+        percentage: 0,
+        message: errorMessage,
+        isComplete: true,
+        error: errorMessage,
+      });
+
+      if (lessonId) {
+        lessonLogger.generationFailed({
+          lessonId,
+          correlationId,
+          duration,
+          error: error as Error,
+        });
+      }
+
+      return {
+        success: false,
+        title: 'Error',
+        error: errorMessage,
+      };
+    }
+  },
+  {
+    name: 'generate_lesson_json_stream',
+    run_type: 'chain',
+    ...(langsmithClient ? { client: langsmithClient } : {}),
+    tags: ['json-lesson-generation', 'streaming', process.env.AI_PROVIDER || 'gemini'],
   }
 );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { LessonForm } from '@/components/lesson-form';
+import { LessonFormStreaming } from '@/components/lesson-form-streaming';
 import { LessonTable } from '@/components/lesson-table';
 import { Modal } from '@/components/ui/modal';
 import { Lesson } from '@/types/lesson';
@@ -18,20 +18,23 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
+    console.log('[HomeClientWrapper] Component mounting');
     setMounted(true);
+    return () => {
+      console.log('[HomeClientWrapper] Component unmounting');
+    };
   }, []);
 
-  const handleLessonCreated = useCallback(async () => {
-    try {
-      const response = await fetch('/api/lessons');
-      if (response.ok) {
-        const data = await response.json();
-        setLessons(data);
-        setIsModalOpen(false);
-      }
-    } catch (error) {
-      console.error('Error fetching lessons:', error);
-    }
+  // Sync lessons state when initialLessons changes (e.g., when navigating back)
+  useEffect(() => {
+    console.log('[HomeClientWrapper] Syncing with new initialLessons prop:', initialLessons.length, 'lessons');
+    setLessons(initialLessons);
+  }, [initialLessons]);
+
+  // Note: No manual refresh needed - LessonTable subscribes to Supabase real-time updates
+  const handleLessonCreated = useCallback(() => {
+    // Real-time subscription will automatically update the lessons list
+    // This callback is kept for potential future use (e.g., showing toast notifications)
   }, []);
 
   if (!mounted) {
@@ -130,7 +133,10 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
 
       {/* Modal */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <LessonForm onLessonCreated={handleLessonCreated} />
+        <LessonFormStreaming
+          onLessonCreated={handleLessonCreated}
+          onSubmit={() => setIsModalOpen(false)}
+        />
       </Modal>
     </>
   );

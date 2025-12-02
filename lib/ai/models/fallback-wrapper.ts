@@ -9,6 +9,7 @@ import {
   AIModelProvider,
   GenerationRequest,
   GenerationResponse,
+  StreamGenerationRequest,
   ImageGenerationRequest,
   ImageGenerationResponse,
 } from './base';
@@ -110,6 +111,56 @@ export class FallbackAIProvider extends AIModelProvider {
     // All providers failed
     throw new Error(
       `All AI providers failed. Last error: ${lastError?.message || 'Unknown error'}`
+    );
+  }
+
+  /**
+   * Attempt streaming generation with fallback logic
+   */
+  async generateTextStream(request: StreamGenerationRequest): Promise<GenerationResponse> {
+    const providers = [this.primary, ...this.fallbacks];
+    let lastError: Error | null = null;
+
+    for (const provider of providers) {
+      const providerName = provider.getProviderName();
+      const startTime = Date.now();
+
+      try {
+        console.log(`🔄 Attempting streaming generation with ${providerName}...`);
+
+        const response = await provider.generateTextStream(request);
+
+        // Record successful metrics
+        const metrics = this.providerMetrics.get(providerName)!;
+        metrics.requests++;
+        metrics.totalTime += Date.now() - startTime;
+
+        console.log(`✅ ${providerName} streaming succeeded`);
+
+        return response;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+
+        // Record error metrics
+        const metrics = this.providerMetrics.get(providerName)!;
+        metrics.errors++;
+
+        console.warn(
+          `❌ ${providerName} streaming failed:`,
+          error instanceof Error ? error.message : error
+        );
+
+        // If this is not the last provider, wait before trying next
+        if (provider !== providers[providers.length - 1]) {
+          console.log(`⏳ Waiting ${this.retryDelay}ms before trying next provider...`);
+          await this.sleep(this.retryDelay);
+        }
+      }
+    }
+
+    // All providers failed
+    throw new Error(
+      `All AI providers failed for streaming. Last error: ${lastError?.message || 'Unknown error'}`
     );
   }
 

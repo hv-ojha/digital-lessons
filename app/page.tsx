@@ -1,6 +1,9 @@
 import { getAllLessons } from '@/lib/db/lessons-server';
 import { HomeClientWrapper } from '@/components/home-client-wrapper';
 
+// Dynamic page - always fetch fresh data on navigation
+export const dynamic = 'force-dynamic';
+
 /**
  * Home Page - Server Component with Enhanced UI
  *

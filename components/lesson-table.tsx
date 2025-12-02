@@ -24,7 +24,15 @@ export function LessonTable({ initialLessons, viewMode = "kid" }: LessonTablePro
   const [loadingLessonId, setLoadingLessonId] = useState<string | null>(null);
   const router = useRouter();
 
+  // Sync lessons state when initialLessons prop changes (e.g., when navigating back)
   useEffect(() => {
+    console.log('[LessonTable] Syncing with new initialLessons prop:', initialLessons.length, 'lessons');
+    setLessons(initialLessons);
+  }, [initialLessons]);
+
+  useEffect(() => {
+    console.log('[LessonTable] Component mounted - setting up real-time subscription');
+
     // Subscribe to real-time updates (optimized - no full refetch)
     const unsubscribe = subscribeToLessonsChanges((updater) => {
       setLessons((prevLessons) => {
@@ -46,6 +54,7 @@ export function LessonTable({ initialLessons, viewMode = "kid" }: LessonTablePro
     });
 
     return () => {
+      console.log('[LessonTable] Component unmounting - cleaning up subscription');
       unsubscribe();
     };
   }, []);

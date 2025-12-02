@@ -16,6 +16,8 @@ export function subscribeToLessonsChanges(
 ) {
   const supabase = createClient();
 
+  console.log('[Supabase] Creating real-time subscription for lessons');
+
   // Subscribe to realtime changes
   const channel = supabase
     .channel('lessons-changes')
@@ -66,9 +68,12 @@ export function subscribeToLessonsChanges(
         );
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      console.log('[Supabase] Subscription status:', status);
+    });
 
   return () => {
+    console.log('[Supabase] Unsubscribing from lessons-changes channel');
     supabase.removeChannel(channel);
   };
 }

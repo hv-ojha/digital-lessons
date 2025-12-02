@@ -115,7 +115,7 @@ export async function getAllLessons(): Promise<Lesson[]> {
     if (Array.isArray(data)) {
       const sanitizedData = data.map(lesson => sanitizeLessonForLogging(lesson));
       console.error('[DB] Raw data that failed validation (content sanitized):',
-        JSON.stringify(sanitizedData, null, 2));
+        JSON.stringify(sanitizedData));
     }
 
     // In development, provide detailed error; in production, return empty array

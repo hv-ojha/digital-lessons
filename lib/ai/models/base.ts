@@ -32,6 +32,22 @@ export interface GenerationResponse {
   finishReason?: string;
 }
 
+/**
+ * Callback for streaming chunks
+ */
+export type StreamChunkCallback = (chunk: {
+  text: string;
+  isComplete: boolean;
+  finishReason?: string;
+}) => void | Promise<void>;
+
+/**
+ * Request for streaming generation
+ */
+export interface StreamGenerationRequest extends GenerationRequest {
+  onChunk: StreamChunkCallback;
+}
+
 export interface ImageGenerationRequest {
   prompt: string;
   style?: 'realistic' | 'cartoon' | 'illustration' | 'diagram';
@@ -70,6 +86,12 @@ export abstract class AIModelProvider {
    * Generate text completion
    */
   abstract generateText(request: GenerationRequest): Promise<GenerationResponse>;
+
+  /**
+   * Generate text with streaming support
+   * Returns the complete text after streaming is done
+   */
+  abstract generateTextStream(request: StreamGenerationRequest): Promise<GenerationResponse>;
 
   /**
    * Generate image (optional - not all providers support this)

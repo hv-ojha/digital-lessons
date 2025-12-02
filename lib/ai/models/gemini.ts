@@ -9,6 +9,7 @@ import {
   AIModelProvider,
   GenerationRequest,
   GenerationResponse,
+  StreamGenerationRequest,
   ImageGenerationRequest,
   ImageGenerationResponse,
   ModelCapabilities,
@@ -104,6 +105,103 @@ export class GeminiModelProvider extends AIModelProvider {
       },
       finishReason,
     };
+  }
+
+  /**
+   * Generate text with streaming support using Gemini
+   */
+  async generateTextStream(request: StreamGenerationRequest): Promise<GenerationResponse> {
+    const { prompt, systemPrompt, config, onChunk } = request;
+
+    // Combine system prompt and user prompt
+    const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+
+    let accumulatedText = '';
+    let finishReason = 'stop';
+
+    try {
+      // Use Gemini's streaming API - correct method is generateContentStream
+      const stream = await this.client.models.generateContentStream({
+        model: this.modelName,
+        contents: fullPrompt,
+        config: {
+          temperature: config?.temperature,
+          maxOutputTokens: config?.maxOutputTokens,
+          topP: config?.topP,
+          topK: config?.topK,
+        },
+      });
+
+      // Process each chunk from the stream
+      for await (const chunk of stream) {
+        let chunkText = '';
+
+        // Extract text from chunk
+        if (chunk.text) {
+          chunkText = chunk.text;
+        } else if (chunk.candidates && chunk.candidates.length > 0) {
+          const candidate = chunk.candidates[0];
+          if (candidate.content?.parts?.[0]?.text) {
+            chunkText = candidate.content.parts[0].text;
+          }
+
+          // Check finish reason from candidate
+          if (candidate.finishReason) {
+            finishReason = candidate.finishReason.toLowerCase();
+          }
+        }
+
+        // Accumulate text
+        accumulatedText += chunkText;
+
+        // Call the chunk callback
+        await onChunk({
+          text: chunkText,
+          isComplete: false,
+          finishReason: undefined,
+        });
+      }
+
+      // Warn if response was truncated
+      if (finishReason === 'max_tokens' || finishReason === 'length') {
+        console.warn('⚠️  [GEMINI STREAM] Response was truncated due to token limit!');
+        console.warn(`   Requested maxOutputTokens: ${config?.maxOutputTokens}`);
+        console.warn(`   Response length: ${accumulatedText.length} chars (~${this.estimateTokens(accumulatedText)} tokens)`);
+      }
+
+      // Send final chunk with completion flag
+      await onChunk({
+        text: '',
+        isComplete: true,
+        finishReason,
+      });
+
+      // Estimate tokens
+      const inputTokens = this.estimateTokens(fullPrompt);
+      const outputTokens = this.estimateTokens(accumulatedText);
+
+      return {
+        text: accumulatedText.trim(),
+        model: this.modelName,
+        tokensUsed: {
+          input: inputTokens,
+          output: outputTokens,
+          total: inputTokens + outputTokens,
+        },
+        finishReason,
+      };
+    } catch (error) {
+      console.error('[GEMINI STREAM] Error during streaming:', error);
+
+      // Send error completion
+      await onChunk({
+        text: '',
+        isComplete: true,
+        finishReason: 'error',
+      });
+
+      throw error;
+    }
   }
 
   /**
