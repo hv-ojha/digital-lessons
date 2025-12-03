@@ -26,14 +26,14 @@ interface StepIndicatorProps {
 export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
   return (
     <div className="w-full mb-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-center gap-8">
         {steps.map((step, index) => {
           const isCompleted = currentStep > step.number;
           const isCurrent = currentStep === step.number;
           const isLast = index === steps.length - 1;
 
           return (
-            <div key={step.number} className="flex items-center flex-1">
+            <div key={step.number} className="flex items-center">
               {/* Step Circle */}
               <div className="flex flex-col items-center">
                 <motion.div
@@ -86,7 +86,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
                 {/* Step Label */}
                 <span
                   className={`
-                    mt-2 text-xs font-medium text-center
+                    mt-2 text-xs font-medium text-center whitespace-nowrap
                     ${
                       isCurrent
                         ? 'text-purple-600 dark:text-purple-400'
@@ -100,7 +100,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
 
               {/* Connecting Line */}
               {!isLast && (
-                <div className="flex-1 h-0.5 mx-2 mb-6">
+                <div className="w-56 h-0.5 -mt-6">
                   <motion.div
                     className="h-full rounded-full"
                     initial={false}

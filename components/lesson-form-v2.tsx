@@ -136,8 +136,12 @@ export function LessonFormV2({ onLessonCreated, onSubmit }: LessonFormV2Props) {
         </div>
       </div>
 
-      {/* Step Indicator */}
-      <StepIndicator currentStep={currentStep} steps={STEPS} />
+      {/* Step Indicator - Centered */}
+      <div className="flex justify-center mb-8">
+        <div className="w-full max-w-lg">
+          <StepIndicator currentStep={currentStep} steps={STEPS} />
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <AnimatePresence mode="wait">
