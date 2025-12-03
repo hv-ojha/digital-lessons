@@ -16,16 +16,16 @@ const enhancedButtonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-sm",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // Enhanced Kid-Friendly Variants
-        playful: "bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold",
-        magic: "bg-gradient-to-r from-blue-500 to-teal-500 text-white font-semibold",
-        sunshine: "bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 font-semibold",
-        success: "bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold",
-        rainbow: "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white font-semibold",
-        // Parent-Friendly Professional Variants
-        professional: "bg-gradient-to-r from-slate-600 to-slate-700 text-white font-medium",
-        trust: "bg-gradient-to-r from-blue-700 to-cyan-600 text-white font-medium",
-        achievement: "bg-gradient-to-r from-yellow-500 to-amber-500 text-gray-900 font-semibold",
+        // Enhanced Kid-Friendly Variants - WCAG AA Compliant
+        playful: "text-white font-semibold [background:var(--gradient-magic)]",
+        magic: "text-white font-semibold [background:var(--gradient-ocean)]",
+        sunshine: "text-foreground font-semibold [background:var(--gradient-sunshine)]",
+        success: "text-white font-semibold [background:var(--gradient-forest)]",
+        rainbow: "text-white font-semibold [background:var(--gradient-rainbow)]",
+        // Parent-Friendly Professional Variants - WCAG AA Compliant
+        professional: "text-white font-medium [background:var(--gradient-professional)]",
+        trust: "text-white font-medium [background:var(--gradient-trust)]",
+        achievement: "text-foreground font-semibold [background:var(--gradient-achievement)]",
       },
       size: {
         default: "h-10 px-4 py-2 rounded-xl",

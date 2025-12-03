@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { InteractiveLesson } from '@/types/lesson-content';
 import { LessonHeader } from './lesson-header';
 import { Zap, CheckCircle, XCircle, Sparkles, ArrowRight, Trophy } from 'lucide-react';
+import { SimpleEducationalBackground } from '@/components/ui/educational-background';
 import Confetti from 'react-confetti';
 import Image from 'next/image';
 
@@ -56,7 +57,9 @@ export function InteractiveRenderer({ lesson }: InteractiveRendererProps) {
     const isGoodScore = percentage >= 70;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
+      <>
+        <SimpleEducationalBackground />
+        <div className="min-h-screen relative py-12 px-4">
         {/* Confetti for good scores */}
         {isGoodScore && showConfetti && (
           <Confetti
@@ -140,12 +143,15 @@ export function InteractiveRenderer({ lesson }: InteractiveRendererProps) {
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
+    <>
+      <SimpleEducationalBackground />
+      <div className="min-h-screen relative py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header with Back Button */}
         <LessonHeader
@@ -272,6 +278,7 @@ export function InteractiveRenderer({ lesson }: InteractiveRendererProps) {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

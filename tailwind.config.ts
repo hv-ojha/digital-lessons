@@ -24,16 +24,16 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          purple: "#8B5CF6",
-          blue: "#3B82F6",
-          indigo: "#6366F1",
+          purple: "var(--color-brand-purple)",
+          blue: "var(--color-brand-blue)",
+          indigo: "var(--color-brand-indigo)",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-          yellow: "#FBBF24",
-          orange: "#FB923C",
-          pink: "#EC4899",
+          yellow: "var(--color-accent-yellow)",
+          orange: "var(--color-accent-orange)",
+          pink: "var(--color-accent-pink)",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -42,9 +42,9 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
-          green: "#34D399",
-          teal: "#14B8A6",
-          lime: "#84CC16",
+          green: "var(--color-semantic-green)",
+          teal: "var(--color-semantic-teal)",
+          lime: "var(--color-semantic-lime)",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

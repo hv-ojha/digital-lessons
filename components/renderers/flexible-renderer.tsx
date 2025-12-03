@@ -3,6 +3,7 @@
 import { FlexibleLesson, ContentBlock } from '@/types/lesson-content-v2';
 import { LessonHeader } from './lesson-header';
 import { useState, useCallback, memo } from 'react';
+import { SimpleEducationalBackground } from '@/components/ui/educational-background';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
@@ -339,7 +340,9 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
   const canShowResults = questionAnswers.size > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
+    <>
+      <SimpleEducationalBackground />
+      <div className="min-h-screen relative py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <LessonHeader
@@ -402,6 +405,7 @@ export function FlexibleRenderer({ lesson }: FlexibleRendererProps) {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

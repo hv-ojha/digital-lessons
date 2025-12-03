@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { MatchingLesson } from '@/types/lesson-content';
 import { LessonHeader } from './lesson-header';
 import { Link2, CheckCircle, RefreshCw, Sparkles, Trophy } from 'lucide-react';
+import { SimpleEducationalBackground } from '@/components/ui/educational-background';
 import Confetti from 'react-confetti';
 
 interface MatchingRendererProps {
@@ -73,7 +74,9 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
 
   if (isComplete) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
+      <>
+        <SimpleEducationalBackground />
+        <div className="min-h-screen relative py-12 px-4">
         {/* Confetti celebration */}
         {showConfetti && (
           <Confetti
@@ -136,11 +139,14 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
+    <>
+      <SimpleEducationalBackground />
+      <div className="min-h-screen relative py-12 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header with Back Button */}
         <LessonHeader
@@ -259,6 +265,7 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

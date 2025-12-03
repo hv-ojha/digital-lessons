@@ -15,24 +15,24 @@ export default function Loading() {
         >
           <defs>
             <linearGradient id="loadingSparkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#3B82F6" />
-              <stop offset="50%" stopColor="#8B5CF6" />
-              <stop offset="100%" stopColor="#EC4899" />
+              <stop offset="0%" stopColor="var(--color-brand-blue)" />
+              <stop offset="50%" stopColor="var(--color-brand-purple)" />
+              <stop offset="100%" stopColor="var(--color-accent-pink)" />
             </linearGradient>
           </defs>
           <path
             d="M100 20 L115 70 L165 75 L125 110 L135 160 L100 135 L65 160 L75 110 L35 75 L85 70 Z"
             fill="url(#loadingSparkGradient)"
-            stroke="#7C3AED"
+            stroke="var(--color-brand-purple)"
             strokeWidth="3"
           />
           <circle cx="85" cy="85" r="8" fill="white" />
           <circle cx="115" cy="85" r="8" fill="white" />
-          <circle cx="87" cy="87" r="4" fill="#1F2937" />
-          <circle cx="117" cy="87" r="4" fill="#1F2937" />
+          <circle cx="87" cy="87" r="4" fill="hsl(var(--foreground))" />
+          <circle cx="117" cy="87" r="4" fill="hsl(var(--foreground))" />
           <path
             d="M 85 105 L 115 105"
-            stroke="#1F2937"
+            stroke="hsl(var(--foreground))"
             strokeWidth="3"
             strokeLinecap="round"
             fill="none"
@@ -41,15 +41,15 @@ export default function Loading() {
 
         {/* Animated dots */}
         <div className="flex justify-center gap-2 mb-6">
-          <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-          <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+          <div className="w-3 h-3 rounded-full animate-bounce [background:var(--color-brand-purple)]" style={{ animationDelay: '0s' }}></div>
+          <div className="w-3 h-3 rounded-full animate-bounce [background:var(--color-accent-pink)]" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-3 h-3 rounded-full animate-bounce [background:var(--color-brand-blue)]" style={{ animationDelay: '0.4s' }}></div>
         </div>
 
         <h1 className="font-display text-4xl font-extrabold gradient-text-magic mb-4">
           Loading Lesson...
         </h1>
-        <p className="text-lg text-gray-700 leading-relaxed">
+        <p className="text-lg text-muted-foreground leading-relaxed">
           Sparky is preparing your learning adventure! Just a moment...
         </p>
       </div>

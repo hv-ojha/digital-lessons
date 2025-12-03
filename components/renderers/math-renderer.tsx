@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MathPracticeLesson } from '@/types/lesson-content';
 import { LessonHeader } from './lesson-header';
 import { Lightbulb, CheckCircle, XCircle, RefreshCw, Calculator as CalcIcon, Trophy } from 'lucide-react';
+import { SimpleEducationalBackground } from '@/components/ui/educational-background';
 import Confetti from 'react-confetti';
 import Image from 'next/image';
 
@@ -64,7 +65,9 @@ export function MathRenderer({ lesson }: MathRendererProps) {
     const [showConfetti, setShowConfetti] = useState(isGoodScore);
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
+      <>
+        <SimpleEducationalBackground />
+        <div className="min-h-screen relative py-12 px-4">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Confetti for good scores */}
           {isGoodScore && showConfetti && (
@@ -143,11 +146,14 @@ export function MathRenderer({ lesson }: MathRendererProps) {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
+    <>
+      <SimpleEducationalBackground />
+      <div className="min-h-screen relative py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header with Back Button */}
         <LessonHeader
@@ -299,6 +305,7 @@ export function MathRenderer({ lesson }: MathRendererProps) {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
