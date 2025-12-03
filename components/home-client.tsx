@@ -26,17 +26,11 @@ export function HomeClient({ initialLessons }: HomeClientProps) {
   }, []);
 
   // Memoized callback to prevent unnecessary re-renders
-  const handleLessonCreated = useCallback(async () => {
-    // Refresh lessons list after creation
-    try {
-      const response = await fetch('/api/lessons');
-      if (response.ok) {
-        const data = await response.json();
-        setLessons(data);
-      }
-    } catch (error) {
-      console.error('Error fetching lessons:', error);
-    }
+  // Note: Real-time subscriptions in LessonTable automatically handle lesson updates,
+  // so no manual refetch is needed here
+  const handleLessonCreated = useCallback(() => {
+    // Real-time subscription will automatically update the lessons list
+    // No need for manual API call
   }, []);
 
   // Prevent hydration mismatch by rendering a simple loading state on server

@@ -3,6 +3,22 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
 
+  // Performance optimizations
+  experimental: {
+    // Enable optimized package imports for better tree-shaking
+    optimizePackageImports: ['framer-motion', 'lucide-react'],
+  },
+
+  // Production optimizations
+  compress: true,
+  productionBrowserSourceMaps: false,
+
+  // Image optimization
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+  },
+
   async headers() {
     return [
       {

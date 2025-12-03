@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Confetti from 'react-confetti';
+import dynamic from 'next/dynamic';
 import { Trophy, Star, Sparkles, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Lazy-load Confetti for better initial bundle size
+const Confetti = dynamic(() => import('react-confetti'), {
+  ssr: false,
+  loading: () => null
+});
 
 export type CelebrationType = 'correct' | 'complete' | 'perfect' | 'levelup' | 'badge';
 
@@ -81,15 +87,23 @@ export function Celebration({
         height: window.innerHeight,
       });
 
+      // Debounced resize handler for better performance
+      let resizeTimeout: NodeJS.Timeout;
       const handleResize = () => {
-        setWindowSize({
-          width: window.innerWidth,
-          height: window.innerHeight,
-        });
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          setWindowSize({
+            width: window.innerWidth,
+            height: window.innerHeight,
+          });
+        }, 150); // Debounce by 150ms
       };
 
       window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+      return () => {
+        clearTimeout(resizeTimeout);
+        window.removeEventListener('resize', handleResize);
+      };
     }
   }, []);
 

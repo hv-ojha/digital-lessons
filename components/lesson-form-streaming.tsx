@@ -60,7 +60,9 @@ export function LessonFormStreaming({ onLessonCreated, onSubmit }: LessonFormStr
       // Reset form
       setOutline('');
     } catch (error) {
-      console.error('Failed to create lesson:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Failed to create lesson:', error);
+      }
       setError(error instanceof Error ? error.message : 'Failed to create lesson');
     } finally {
       setIsSubmitting(false);

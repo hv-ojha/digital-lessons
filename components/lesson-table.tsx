@@ -26,12 +26,16 @@ export function LessonTable({ initialLessons, viewMode = "kid" }: LessonTablePro
 
   // Sync lessons state when initialLessons prop changes (e.g., when navigating back)
   useEffect(() => {
-    console.log('[LessonTable] Syncing with new initialLessons prop:', initialLessons.length, 'lessons');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[LessonTable] Syncing with new initialLessons prop:', initialLessons.length, 'lessons');
+    }
     setLessons(initialLessons);
   }, [initialLessons]);
 
   useEffect(() => {
-    console.log('[LessonTable] Component mounted - setting up real-time subscription');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[LessonTable] Component mounted - setting up real-time subscription');
+    }
 
     // Subscribe to real-time updates (optimized - no full refetch)
     const unsubscribe = subscribeToLessonsChanges((updater) => {
@@ -54,7 +58,9 @@ export function LessonTable({ initialLessons, viewMode = "kid" }: LessonTablePro
     });
 
     return () => {
-      console.log('[LessonTable] Component unmounting - cleaning up subscription');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[LessonTable] Component unmounting - cleaning up subscription');
+      }
       unsubscribe();
     };
   }, []);
@@ -77,7 +83,9 @@ export function LessonTable({ initialLessons, viewMode = "kid" }: LessonTablePro
 
       // Real-time updates will handle the UI update
     } catch (error) {
-      console.error('Retry error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Retry error:', error);
+      }
       alert(error instanceof Error ? error.message : 'Failed to retry lesson generation');
       setRetryingIds((prev) => {
         const newSet = new Set(prev);

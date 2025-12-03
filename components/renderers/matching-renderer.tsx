@@ -18,10 +18,17 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
   const [isComplete, setIsComplete] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Shuffle right items on mount
+  // Shuffle right items on mount using Fisher-Yates algorithm
   useEffect(() => {
     const right = lesson.pairs.map(p => p.right);
-    const shuffled = [...right].sort(() => Math.random() - 0.5);
+
+    // Fisher-Yates shuffle for proper randomization
+    const shuffled = [...right];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
     setShuffledRight(shuffled);
   }, [lesson.pairs]);
 
@@ -68,7 +75,14 @@ export function MatchingRenderer({ lesson }: MatchingRendererProps) {
     setSelectedLeft(null);
     setIsComplete(false);
     const right = lesson.pairs.map(p => p.right);
-    const shuffled = [...right].sort(() => Math.random() - 0.5);
+
+    // Fisher-Yates shuffle for proper randomization
+    const shuffled = [...right];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
     setShuffledRight(shuffled);
   };
 

@@ -117,19 +117,24 @@ export const ViewModeProvider: React.FC<{
   defaultMode?: ViewMode;
 }> = ({ children, defaultMode = "kid" }) => {
   const [mode, setMode] = React.useState<ViewMode>(defaultMode);
+  const [mounted, setMounted] = React.useState(false);
 
+  // Set mounted on client-side to prevent hydration mismatch
   React.useEffect(() => {
-    // Save to localStorage
-    localStorage.setItem("viewMode", mode);
-  }, [mode]);
-
-  React.useEffect(() => {
-    // Load from localStorage on mount
+    setMounted(true);
+    // Load from localStorage on mount (only on client)
     const savedMode = localStorage.getItem("viewMode") as ViewMode | null;
     if (savedMode && (savedMode === "kid" || savedMode === "parent")) {
       setMode(savedMode);
     }
   }, []);
+
+  React.useEffect(() => {
+    // Save to localStorage when mode changes (skip initial mount)
+    if (mounted) {
+      localStorage.setItem("viewMode", mode);
+    }
+  }, [mode, mounted]);
 
   return (
     <ViewModeContext.Provider value={{ mode, setMode }}>

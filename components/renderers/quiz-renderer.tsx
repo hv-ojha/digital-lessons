@@ -35,15 +35,23 @@ export function QuizRenderer({ lesson }: QuizRendererProps) {
         height: window.innerHeight,
       });
 
+      // Debounced resize handler for better performance
+      let resizeTimeout: NodeJS.Timeout;
       const handleResize = () => {
-        setWindowSize({
-          width: window.innerWidth,
-          height: window.innerHeight,
-        });
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          setWindowSize({
+            width: window.innerWidth,
+            height: window.innerHeight,
+          });
+        }, 150); // Debounce by 150ms
       };
 
       window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+      return () => {
+        clearTimeout(resizeTimeout);
+        window.removeEventListener('resize', handleResize);
+      };
     }
   }, []);
 

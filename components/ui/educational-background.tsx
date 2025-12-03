@@ -1,13 +1,32 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 /**
  * Educational Background Pattern
  * A playful, kid-friendly background with educational elements
  * Fixed position - stays in place while content scrolls
+ * Optimized for performance with reduced animations and prefers-reduced-motion support
  */
 export function EducationalBackground() {
+  const [shouldAnimate, setShouldAnimate] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Check for prefers-reduced-motion
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setShouldAnimate(!mediaQuery.matches);
+
+    const handleChange = () => {
+      setShouldAnimate(!mediaQuery.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
       {/* Base gradient */}
@@ -92,68 +111,97 @@ export function EducationalBackground() {
         <rect width="100%" height="100%" fill="url(#educational-pattern)" />
       </svg>
 
-      {/* Animated floating shapes */}
-      <div className="fixed inset-0">
-        {/* Large circles */}
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="fixed rounded-full"
-            style={{
-              width: `${100 + i * 30}px`,
-              height: `${100 + i * 30}px`,
-              left: `${(i * 15) % 90}%`,
-              top: `${(i * 20) % 80}%`,
-              background: [
-                'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(219, 39, 119, 0.1) 100%)',
-                'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
-              ][i % 3],
-            }}
-            animate={{
-              y: [0, -30, 0],
-              x: [0, i % 2 === 0 ? 20 : -20, 0],
-              scale: [1, 1.1, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 8 + i * 2,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          />
-        ))}
+      {/* Animated floating shapes - Reduced count for performance */}
+      {/* Only render animations after mount to prevent hydration mismatch */}
+      {mounted && shouldAnimate && (
+        <div className="fixed inset-0">
+          {/* Large circles - Reduced from 8 to 4 */}
+          {[...Array(4)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="fixed rounded-full"
+              style={{
+                width: `${120 + i * 40}px`,
+                height: `${120 + i * 40}px`,
+                left: `${(i * 25) % 85}%`,
+                top: `${(i * 25) % 75}%`,
+                background: [
+                  'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(219, 39, 119, 0.1) 100%)',
+                  'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                  'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
+                ][i % 3],
+                willChange: 'transform, opacity',
+              }}
+              animate={{
+                y: [0, -30, 0],
+                x: [0, i % 2 === 0 ? 20 : -20, 0],
+                scale: [1, 1.1, 1],
+                opacity: [0.3, 0.5, 0.3],
+              }}
+              transition={{
+                duration: 10 + i * 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
+          ))}
 
-        {/* Sparkle elements */}
-        {[...Array(12)].map((_, i) => (
-          <motion.div
-            key={`sparkle-${i}`}
-            className="fixed"
-            style={{
-              left: `${(i * 8 + 10) % 90}%`,
-              top: `${(i * 12 + 5) % 90}%`,
-            }}
-            animate={{
-              scale: [0, 1, 0],
-              rotate: [0, 180, 360],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              delay: i * 0.3,
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20">
-              <path
-                d="M10 0 L11 8 L15 5 L12 9 L20 10 L12 11 L15 15 L11 12 L10 20 L9 12 L5 15 L8 11 L0 10 L8 9 L5 5 L9 8 Z"
-                fill={['#F59E0B', '#EC4899', '#8B5CF6', '#3B82F6'][i % 4]}
-                opacity="0.4"
-              />
-            </svg>
-          </motion.div>
-        ))}
-      </div>
+          {/* Sparkle elements - Reduced from 12 to 6 */}
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={`sparkle-${i}`}
+              className="fixed"
+              style={{
+                left: `${(i * 15 + 10) % 85}%`,
+                top: `${(i * 18 + 5) % 85}%`,
+                willChange: 'transform, opacity',
+              }}
+              animate={{
+                scale: [0, 1, 0],
+                rotate: [0, 180, 360],
+                opacity: [0, 0.8, 0],
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                delay: i * 0.5,
+                ease: 'easeInOut',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20">
+                <path
+                  d="M10 0 L11 8 L15 5 L12 9 L20 10 L12 11 L15 15 L11 12 L10 20 L9 12 L5 15 L8 11 L0 10 L8 9 L5 5 L9 8 Z"
+                  fill={['#F59E0B', '#EC4899', '#8B5CF6', '#3B82F6'][i % 4]}
+                  opacity="0.4"
+                />
+              </svg>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Static shapes for reduced motion preference */}
+      {mounted && !shouldAnimate && (
+        <div className="fixed inset-0">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="fixed rounded-full opacity-30"
+              style={{
+                width: `${120 + i * 40}px`,
+                height: `${120 + i * 40}px`,
+                left: `${(i * 25) % 85}%`,
+                top: `${(i * 25) % 75}%`,
+                background: [
+                  'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(219, 39, 119, 0.1) 100%)',
+                  'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                  'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
+                ][i % 3],
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Gradient overlay for better text readability */}
       <div className="fixed inset-0 bg-gradient-to-b from-transparent via-white/30 to-white/60 dark:via-gray-900/30 dark:to-gray-900/60" />

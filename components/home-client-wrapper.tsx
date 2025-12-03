@@ -32,17 +32,27 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   // Mock user data - Replace with real data from your auth/database
   const [streakCount] = useState(5);
 
-  // Filter lessons based on search query (memoized for performance)
+  // Debounce search query for better performance (300ms delay)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Filter lessons based on debounced search query (memoized for performance)
   const filteredLessons = useMemo(() => {
-    if (!searchQuery.trim()) {
+    if (!debouncedSearchQuery.trim()) {
       return lessons;
     }
 
-    const query = searchQuery.toLowerCase().trim();
+    const query = debouncedSearchQuery.toLowerCase().trim();
     return lessons.filter((lesson) => {
       const titleMatch = lesson.title.toLowerCase().includes(query);
       const outlineMatch = lesson.outline.toLowerCase().includes(query);
@@ -50,24 +60,30 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
 
       return titleMatch || outlineMatch || typeMatch;
     });
-  }, [lessons, searchQuery]);
+  }, [lessons, debouncedSearchQuery]);
 
   useEffect(() => {
-    console.log('[HomeClientWrapper] Component mounting');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[HomeClientWrapper] Component mounting');
+    }
     setMounted(true);
 
     // Hide welcome message after 5 seconds
     const timer = setTimeout(() => setShowWelcome(false), 5000);
 
     return () => {
-      console.log('[HomeClientWrapper] Component unmounting');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[HomeClientWrapper] Component unmounting');
+      }
       clearTimeout(timer);
     };
   }, []);
 
   // Sync lessons state when initialLessons changes (e.g., when navigating back)
   useEffect(() => {
-    console.log('[HomeClientWrapper] Syncing with new initialLessons prop:', initialLessons.length, 'lessons');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[HomeClientWrapper] Syncing with new initialLessons prop:', initialLessons.length, 'lessons');
+    }
     setLessons(initialLessons);
   }, [initialLessons]);
 
@@ -272,7 +288,7 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
               />
 
               {/* Search Results Count */}
-              {searchQuery && (
+              {debouncedSearchQuery && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -282,13 +298,13 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
                     {filteredLessons.length === 0 ? (
                       <span className="flex items-center justify-center gap-2">
                         <span>😢</span>
-                        <span>No lessons found matching "{searchQuery}"</span>
+                        <span>No lessons found matching "{debouncedSearchQuery}"</span>
                       </span>
                     ) : (
                       <span className="flex items-center justify-center gap-2">
                         <span>✨</span>
                         <span>
-                          Found {filteredLessons.length} {filteredLessons.length === 1 ? 'lesson' : 'lessons'} matching "{searchQuery}"
+                          Found {filteredLessons.length} {filteredLessons.length === 1 ? 'lesson' : 'lessons'} matching "{debouncedSearchQuery}"
                         </span>
                       </span>
                     )}
