@@ -4,6 +4,70 @@ import { JsonLessonRenderer } from '@/components/json-lesson-renderer';
 import { validateLessonContent } from '@/types/lesson-content';
 import { validateFlexibleLesson } from '@/types/lesson-content-v2';
 import { LessonErrorBoundary } from '@/components/error-boundary';
+import type { Metadata } from 'next';
+import { LessonSchema, BreadcrumbSchema } from '@/components/structured-data';
+
+// Generate dynamic metadata for each lesson page
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const lesson = await getLesson(id);
+
+  if (!lesson) {
+    return {
+      title: 'Lesson Not Found',
+      description: 'The requested lesson could not be found.',
+    };
+  }
+
+  const title = `${lesson.title} - Interactive Lesson`;
+  const description = `Learn ${lesson.title} with Spark's AI-powered interactive lesson. Engaging content for Indian students with quizzes, games, and personalized learning.`;
+
+  return {
+    title,
+    description,
+    keywords: [
+      lesson.title,
+      "interactive lesson",
+      "online learning India",
+      "CBSE",
+      "ICSE",
+      "educational content",
+      "AI learning",
+      "student resources",
+    ],
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      publishedTime: lesson.created_at,
+      modifiedTime: lesson.updated_at,
+      authors: ['Spark Education'],
+      section: 'Education',
+      tags: [lesson.title, 'interactive learning', 'education'],
+      images: [
+        {
+          url: '/og-lesson-image.png',
+          width: 1200,
+          height: 630,
+          alt: title,
+        }
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/twitter-lesson-image.png'],
+    },
+    alternates: {
+      canonical: `/lessons/${id}`,
+    },
+  };
+}
 
 export default async function LessonPage({
   params,
@@ -108,14 +172,40 @@ export default async function LessonPage({
   // Parse and render JSON-based lesson
   try {
     const parsedContent = JSON.parse(lesson.content);
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
+
+    // Structured data for the lesson
+    const structuredData = (
+      <>
+        <LessonSchema
+          title={lesson.title}
+          description={`Interactive lesson: ${lesson.title}`}
+          url={`${baseUrl}/lessons/${lesson.id}`}
+          datePublished={lesson.created_at}
+          dateModified={lesson.updated_at}
+        />
+        <BreadcrumbSchema
+          items={[
+            { name: 'Home', url: baseUrl },
+            { name: 'Lessons', url: `${baseUrl}/lessons` },
+            { name: lesson.title, url: `${baseUrl}/lessons/${lesson.id}` },
+          ]}
+        />
+      </>
+    );
 
     // Try flexible validation first (v2)
     const flexibleValidation = validateFlexibleLesson(parsedContent);
     if (flexibleValidation.isValid && flexibleValidation.data) {
       return (
-        <LessonErrorBoundary lessonId={lesson.id}>
-          <JsonLessonRenderer content={flexibleValidation.data} title={lesson.title} />
-        </LessonErrorBoundary>
+        <>
+          {structuredData}
+          <LessonErrorBoundary lessonId={lesson.id}>
+            <JsonLessonRenderer content={flexibleValidation.data} title={lesson.title} />
+          </LessonErrorBoundary>
+        </>
       );
     }
 
@@ -123,9 +213,12 @@ export default async function LessonPage({
     const validation = validateLessonContent(parsedContent);
     if (validation.isValid && validation.data) {
       return (
-        <LessonErrorBoundary lessonId={lesson.id}>
-          <JsonLessonRenderer content={validation.data} title={lesson.title} />
-        </LessonErrorBoundary>
+        <>
+          {structuredData}
+          <LessonErrorBoundary lessonId={lesson.id}>
+            <JsonLessonRenderer content={validation.data} title={lesson.title} />
+          </LessonErrorBoundary>
+        </>
       );
     }
 

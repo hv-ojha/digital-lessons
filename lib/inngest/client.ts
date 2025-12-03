@@ -8,6 +8,6 @@
 import { Inngest } from 'inngest';
 
 export const inngest = new Inngest({
-  id: 'digital-lessons',
-  name: 'Digital Lessons',
+  id: 'spark-edu',
+  name: 'Spark',
 });

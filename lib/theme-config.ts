@@ -1,7 +1,7 @@
 /**
  * Centralized Theme Configuration
  *
- * This file contains all color definitions for the Digital Lessons platform.
+ * This file contains all color definitions for the Spark platform.
  * All colors are WCAG AA compliant for accessibility.
  *
  * WCAG AA Requirements:

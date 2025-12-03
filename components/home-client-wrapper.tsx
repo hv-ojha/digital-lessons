@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
 import { LessonFormStreaming } from '@/components/lesson-form-streaming';
 import { LessonTable } from '@/components/lesson-table';
 import { Modal } from '@/components/ui/modal';
@@ -13,18 +13,11 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { SearchInput } from '@/components/ui/search-input';
 import { EducationalBackground } from '@/components/ui/educational-background';
 import Link from 'next/link';
-import { Plus, Sparkles, BookOpen, Zap, Trophy, Star, Rocket } from 'lucide-react';
+import { Plus, Sparkles, Star, Rocket } from 'lucide-react';
 
 interface HomeClientWrapperProps {
   initialLessons: Lesson[];
 }
-
-// Fun stats for display
-const STATS = [
-  { icon: BookOpen, label: 'Lessons', value: '1000+', color: 'from-blue-400 to-indigo-500' },
-  { icon: Zap, label: 'Active Learners', value: '500+', color: 'from-purple-400 to-pink-500' },
-  { icon: Trophy, label: 'Achievements', value: '50+', color: 'from-yellow-400 to-orange-500' },
-];
 
 export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
   const [lessons, setLessons] = useState<Lesson[]>(initialLessons);
@@ -33,6 +26,11 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
   const [showWelcome, setShowWelcome] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Refs for smooth scrolling
+  const searchSectionRef = useRef<HTMLDivElement>(null);
+  const lessonsSectionRef = useRef<HTMLDivElement>(null);
 
   // Mock user data - Replace with real data from your auth/database
   const [streakCount] = useState(5);
@@ -87,9 +85,41 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
     setLessons(initialLessons);
   }, [initialLessons]);
 
+  // Scroll detection for Sparky animation
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollThreshold = 200; // Pixels to scroll before triggering animation
+      setIsScrolled(window.scrollY > scrollThreshold);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleLessonCreated = useCallback(() => {
     // Real-time subscription will automatically update the lessons list
   }, []);
+
+  // Smooth scroll to search section with offset for sticky header
+  const scrollToSearch = useCallback(() => {
+    if (searchSectionRef.current) {
+      const headerOffset = 150; // Account for sticky header + extra viewport space
+      const elementPosition = searchSectionRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  // Smooth scroll to search section when exploring lessons
+  const scrollToLessons = useCallback(() => {
+    // Scroll to search section instead of lessons section
+    // This brings search to the top and lessons are visible below
+    scrollToSearch();
+  }, [scrollToSearch]);
 
   if (!mounted) {
     return (
@@ -111,29 +141,48 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
       <EducationalBackground />
 
       <main id="main-content" className="min-h-screen relative">
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Navigation Header */}
-          <motion.header
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="py-6"
-          >
+        {/* Navigation Header - Sticky */}
+        <motion.header
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="sticky top-0 z-50 py-6 bg-gradient-to-r from-purple-50/95 via-pink-50/95 to-blue-50/95 dark:from-gray-900/95 dark:via-gray-900/95 dark:to-gray-900/95 backdrop-blur-md border-b border-purple-200/50 dark:border-purple-800/50 shadow-sm"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
-              {/* Logo & Brand */}
+              {/* Logo & Brand with Sparky */}
               <Link href="/" className="flex items-center gap-3 group">
-                <motion.div
-                  whileHover={{ rotate: 360, scale: 1.1 }}
-                  transition={{ duration: 0.5 }}
-                  className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-playful"
-                >
-                  <Sparkles className="w-8 h-8 text-white" />
-                </motion.div>
+                <AnimatePresence mode="wait">
+                  {isScrolled ? (
+                    <motion.div
+                      key="sparky"
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className="w-14 h-14 flex items-center justify-center"
+                    >
+                      <SparkyMascot emotion="happy" size="sm" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="sparkles"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      whileHover={{ rotate: 360, scale: 1.1 }}
+                      className="w-14 h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-playful"
+                    >
+                      <Sparkles className="w-8 h-8 text-white" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div>
                   <h1 className="text-2xl md:text-3xl font-display font-bold bg-gradient-rainbow bg-clip-text text-transparent">
-                    Digital Lessons
+                    Spark
                   </h1>
                   <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-medium">
-                    Learn. Play. Grow. 🚀
+                    Ignite Learning ✨
                   </p>
                 </div>
               </Link>
@@ -164,12 +213,14 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
                 </PlayfulButton>
               </div>
             </div>
-          </motion.header>
+          </div>
+        </motion.header>
 
-          {/* Hero Section with Sparky */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Hero Section */}
           <section className="py-12 md:py-16">
             <div className="max-w-5xl mx-auto">
-              {/* Sparky Mascot */}
+              {/* Sparky in Hero - Always visible */}
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
@@ -214,43 +265,11 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
                     variant="outline"
                     size="lg"
                     icon={<Star className="w-6 h-6" />}
+                    onClick={scrollToLessons}
                   >
                     Explore Lessons
                   </PlayfulButton>
                 </div>
-              </motion.div>
-
-              {/* Fun Stats */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="grid grid-cols-3 gap-4 md:gap-6 mt-12"
-              >
-                {STATS.map((stat, index) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 200,
-                      delay: 0.8 + index * 0.1,
-                    }}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    className="card-playful p-4 md:p-6"
-                  >
-                    <div className={`w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                      <stat.icon className="w-6 h-6 md:w-8 md:h-8 text-white" />
-                    </div>
-                    <div className="text-2xl md:text-3xl font-display font-bold text-gray-900 dark:text-white">
-                      {stat.value}
-                    </div>
-                    <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-medium">
-                      {stat.label}
-                    </div>
-                  </motion.div>
-                ))}
               </motion.div>
             </div>
           </section>
@@ -272,28 +291,32 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
             )}
           </AnimatePresence>
 
-          {/* Search Section */}
+          {/* Search Section - Sticky */}
           {lessons.length > 0 && (
             <motion.section
+              ref={searchSectionRef}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              className="max-w-2xl mx-auto mb-12"
+              className="sticky top-24 z-40 mb-12 py-4"
             >
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search lessons by title, topic, or type..."
-                className="w-full"
-              />
+              <div className="max-w-2xl mx-auto">
+                <div onFocus={scrollToSearch}>
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Search lessons by title, topic, or type..."
+                    className="w-full"
+                  />
+                </div>
 
-              {/* Search Results Count */}
-              {debouncedSearchQuery && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 text-center"
-                >
+                {/* Search Results Count */}
+                {debouncedSearchQuery && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 text-center"
+                  >
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {filteredLessons.length === 0 ? (
                       <span className="flex items-center justify-center gap-2">
@@ -311,11 +334,12 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
                   </p>
                 </motion.div>
               )}
+              </div>
             </motion.section>
           )}
 
           {/* Main Content - Lessons Section */}
-          <section className="pb-20">
+          <section ref={lessonsSectionRef} className="pb-20">
             <LessonTable initialLessons={filteredLessons} />
           </section>
 

@@ -1,0 +1,26 @@
+# Spark - Educational Platform for Indian Students
+# robots.txt
+
+# Allow all search engines to crawl
+User-agent: *
+Allow: /
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Slurp
+Allow: /
+
+# Disallow API routes and private paths
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+# Sitemap location
+Sitemap: https://yourdomain.com/sitemap.xml

@@ -1,6 +1,6 @@
 # Observability Module
 
-This module provides structured logging with correlation IDs for the Digital Lessons application.
+This module provides structured logging with correlation IDs for the Spark application.
 
 ## Overview
 

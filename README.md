@@ -1,8 +1,8 @@
-# Digital Lessons - AI-Powered Educational Platform
+# Spark - AI-Powered Educational Platform
 
-> **Assignment for Astral** - Interactive educational content generation using AI
+> **Ignite Learning for Indian Students** - Interactive educational content generation using AI
 
-An educational platform that generates engaging, interactive lessons from simple text prompts using JSON-based structured content. Built with Next.js, TypeScript, Supabase, and Google Gemini AI.
+An educational platform that generates engaging, interactive lessons from simple text prompts using JSON-based structured content. Built with Next.js, TypeScript, Supabase, and Google Gemini AI. Optimized for Indian students and teachers with CBSE/ICSE curriculum support.
 
 ## 📋 Project Agenda
 
@@ -57,7 +57,7 @@ GEMINI_API_KEY=your-gemini-api-key
 # Optional - Observability (Recommended)
 LANGCHAIN_TRACING_V2=true
 LANGSMITH_API_KEY=your-langsmith-key
-LANGSMITH_PROJECT=digital-lessons
+LANGSMITH_PROJECT=spark-edu
 ```
 
 ### 3. Setup Supabase Database
@@ -279,7 +279,7 @@ LangSmith provides detailed tracing of all AI calls:
    ```bash
    LANGCHAIN_TRACING_V2=true
    LANGSMITH_API_KEY=lsv2_pt_...
-   LANGSMITH_PROJECT=digital-lessons
+   LANGSMITH_PROJECT=spark-edu
    ```
 3. View traces at https://smith.langchain.com
 
@@ -362,7 +362,7 @@ SVGs are perfect for:
 ### Recommended
 - `LANGCHAIN_TRACING_V2=true` - Enable LangSmith tracing
 - `LANGSMITH_API_KEY` - For AI observability
-- `LANGSMITH_PROJECT=digital-lessons`
+- `LANGSMITH_PROJECT=spark-edu`
 
 ### Optional
 - `AI_PROVIDER=gemini` - Change AI provider
