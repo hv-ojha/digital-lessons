@@ -17,6 +17,7 @@ interface FlashcardRendererProps {
 export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
 
   const currentCard = lesson.cards[currentIndex];
   const totalCards = lesson.cards.length;
@@ -27,6 +28,9 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
       setIsFlipped(false);
       // TODO: Add page flip sound
       // playSound('flip');
+    } else {
+      // Reached the end of cards
+      setIsComplete(true);
     }
   };
 
@@ -45,7 +49,94 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
     // playSound('cardFlip');
   };
 
+  const handleRestart = () => {
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setIsComplete(false);
+  };
+
   const progress = Math.round(((currentIndex + 1) / totalCards) * 100);
+
+  // Completion Screen
+  if (isComplete) {
+    return (
+      <>
+        <SimpleEducationalBackground />
+        <div className="min-h-screen relative py-12 px-4">
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Header */}
+            <LessonHeader
+              title={lesson.title}
+              description="Flashcards Complete!"
+            />
+
+            {/* Completion Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-3xl shadow-playful-lg p-8 md:p-12 text-center space-y-8"
+            >
+              {/* Trophy Animation */}
+              <motion.div
+                animate={{
+                  rotate: [0, -10, 10, -10, 10, 0],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 3,
+                }}
+                className="w-24 h-24 mx-auto bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-playful-lg"
+              >
+                <Star className="w-12 h-12 text-white fill-current" />
+              </motion.div>
+
+              <div>
+                <h1 className="heading-kid-hero text-gray-900 dark:text-gray-100 mb-4">
+                  Great Job! 🎉
+                </h1>
+                <p className="text-kid-body text-gray-600 dark:text-gray-400">
+                  You reviewed all {totalCards} flashcard{totalCards !== 1 ? 's' : ''}!
+                </p>
+              </div>
+
+              {/* Sparky Message */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <SparkyMascot emotion="celebrating" size="lg" />
+                <p className="mt-4 text-lg font-semibold text-purple-600 dark:text-purple-400">
+                  Amazing work! You're getting smarter every day! 🌟
+                </p>
+              </motion.div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                <PlayfulButton
+                  variant="playful"
+                  size="lg"
+                  icon={<RotateCcw className="w-5 h-5" />}
+                  onClick={handleRestart}
+                >
+                  Review Again
+                </PlayfulButton>
+              </div>
+
+              {/* Study Tips */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6">
+                <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                  💡 <strong>Study Tip:</strong> Reviewing multiple times helps you remember better. Try going through these cards again tomorrow!
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -121,9 +212,10 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
               >
                 {/* Front of Card */}
                 <motion.div
-                  className="absolute w-full h-full backface-hidden rounded-3xl shadow-playful-lg p-8 md:p-12 flex flex-col items-center justify-center overflow-hidden"
+                  className="absolute w-full h-full rounded-3xl shadow-playful-lg p-8 md:p-12 flex flex-col items-center justify-center overflow-hidden"
                   style={{
                     backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   }}
                 >
@@ -184,13 +276,13 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
                     )}
 
                     <motion.div
-                      className="absolute bottom-8 left-1/2 -translate-x-1/2"
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="absolute top-4 right-4"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
                     >
-                      <div className="flex items-center gap-2 text-white/90 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                        <RotateCcw className="w-4 h-4" />
-                        <span className="text-sm font-semibold">Click to reveal answer</span>
+                      <div className="flex items-center gap-2 text-white/90 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                        <RotateCcw className="w-3 h-3" />
+                        <span className="text-xs font-semibold">Click to flip</span>
                       </div>
                     </motion.div>
                   </div>
@@ -198,9 +290,10 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
 
                 {/* Back of Card */}
                 <motion.div
-                  className="absolute w-full h-full backface-hidden rounded-3xl shadow-playful-lg p-8 md:p-12 flex flex-col items-center justify-center overflow-hidden rotate-y-180"
+                  className="absolute w-full h-full rounded-3xl shadow-playful-lg p-8 md:p-12 flex flex-col items-center justify-center overflow-hidden"
                   style={{
                     backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
                     transform: 'rotateY(180deg)',
                     background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
                   }}
@@ -271,13 +364,13 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
                     )}
 
                     <motion.div
-                      className="absolute bottom-8 left-1/2 -translate-x-1/2"
-                      animate={{ y: [0, -8, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="absolute top-4 right-4"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
                     >
-                      <div className="flex items-center gap-2 text-white/90 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                        <RotateCcw className="w-4 h-4" />
-                        <span className="text-sm font-semibold">Click to see question</span>
+                      <div className="flex items-center gap-2 text-white/90 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                        <RotateCcw className="w-3 h-3" />
+                        <span className="text-xs font-semibold">Click to flip</span>
                       </div>
                     </motion.div>
                   </div>
@@ -314,14 +407,13 @@ export function FlashcardRenderer({ lesson }: FlashcardRendererProps) {
           </PlayfulButton>
 
           <PlayfulButton
-            variant="outline"
+            variant={currentIndex === totalCards - 1 ? "playful" : "outline"}
             size="lg"
-            icon={<ChevronRight className="w-5 h-5" />}
+            icon={currentIndex === totalCards - 1 ? <Star className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             iconPosition="right"
             onClick={handleNext}
-            disabled={currentIndex === totalCards - 1}
           >
-            Next
+            {currentIndex === totalCards - 1 ? 'Finish' : 'Next'}
           </PlayfulButton>
         </motion.div>
 

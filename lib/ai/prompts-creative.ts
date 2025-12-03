@@ -118,9 +118,13 @@ RULES:
 
 /**
  * Enhanced user prompt with smart format detection
+ * @param outline - The lesson outline
+ * @param title - The lesson title
+ * @param requestedType - Optional specific lesson type to generate (overrides auto-detection)
  */
-export function getCreativeUserPrompt(outline: string, title: string): string {
-  const format = detectContentFormat(outline);
+export function getCreativeUserPrompt(outline: string, title: string, requestedType?: string): string {
+  // Use requested type if provided, otherwise auto-detect
+  const format = requestedType || detectContentFormat(outline);
 
   // For simple quiz/math/flashcard requests, use legacy format
   if (format === 'quiz') {
@@ -218,9 +222,14 @@ Create lesson now:`;
 
 /**
  * Minimal retry prompt
+ * @param outline - The lesson outline
+ * @param title - The lesson title
+ * @param error - The error from previous attempt
+ * @param requestedType - Optional specific lesson type to generate (overrides auto-detection)
  */
-export function getCreativeRetryPrompt(outline: string, title: string, error: string): string {
-  const format = detectContentFormat(outline);
+export function getCreativeRetryPrompt(outline: string, title: string, error: string, requestedType?: string): string {
+  // Use requested type if provided, otherwise auto-detect
+  const format = requestedType || detectContentFormat(outline);
 
   return `Error: ${error}
 

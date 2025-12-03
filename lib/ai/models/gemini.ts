@@ -86,9 +86,13 @@ export class GeminiModelProvider extends AIModelProvider {
 
     // Warn if response was truncated
     if (finishReason === 'max_tokens' || finishReason === 'length') {
-      console.warn('⚠️  [GEMINI] Response was truncated due to token limit!');
+      console.warn('⚠️  [GEMINI] Response was truncated!');
+      console.warn(`   Finish reason: ${finishReason}`);
       console.warn(`   Requested maxOutputTokens: ${config?.maxOutputTokens}`);
       console.warn(`   Response length: ${text.length} chars (~${this.estimateTokens(text)} tokens)`);
+      console.warn(`   Input length: ${fullPrompt.length} chars (~${this.estimateTokens(fullPrompt)} tokens)`);
+      console.warn(`   📝 NOTE: If output tokens << maxOutputTokens, this may be a context window issue.`);
+      console.warn(`   📝 Total tokens (input + output) might exceed model's context window.`);
     }
 
     // Estimate tokens (Gemini doesn't return exact counts in response)
@@ -344,7 +348,7 @@ Generate the SVG now:`;
       textGeneration: true,
       imageGeneration: true,
       codeGeneration: true,
-      maxTokens: 8192,
+      maxTokens: 32768, // Gemini 2.5 Flash supports up to 32K output tokens
       supportsSystemPrompt: true, // Via prompt combination
     };
   }

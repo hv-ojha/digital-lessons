@@ -18,11 +18,13 @@ import { shouldUseInngest } from '@/lib/execution-mode';
  *
  * @param lessonId - The lesson ID to generate content for
  * @param outline - The lesson outline/prompt
+ * @param lessonType - Optional specific lesson type to generate (if not provided, AI decides)
  * @returns Promise that resolves when generation is queued (async) or completed (sync)
  */
 export async function generateLessonContent(
   lessonId: string,
-  outline: string
+  outline: string,
+  lessonType?: string
 ): Promise<{ mode: 'sync' | 'async'; success?: boolean }> {
   if (shouldUseInngest()) {
     // Production: Use Inngest for async execution
@@ -33,6 +35,7 @@ export async function generateLessonContent(
       data: {
         lessonId,
         outline,
+        lessonType,
       },
     });
 
@@ -43,10 +46,13 @@ export async function generateLessonContent(
     // Local development: Execute synchronously
     console.log(`⚡ [SYNC] Generating lesson ${lessonId} directly (local mode)`);
     console.log(`   Generator: JSON-based with flexible content`);
+    if (lessonType) {
+      console.log(`   Requested Type: ${lessonType}`);
+    }
 
     try {
       // Generate using JSON-based approach
-      const result = await generateLessonJson(outline);
+      const result = await generateLessonJson(outline, lessonType);
 
       console.log(`📊 [SYNC] Generation completed:`, {
         success: result.success,

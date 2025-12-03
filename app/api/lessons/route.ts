@@ -8,6 +8,7 @@ import { z } from 'zod';
 // Schema for request validation
 const createLessonSchema = z.object({
   outline: z.string().min(5, 'Outline must be at least 5 characters').max(500, 'Outline must be less than 500 characters'),
+  lessonType: z.enum(['quiz', 'flashcard', 'math', 'reading', 'interactive', 'matching', 'flexible']).optional().nullable(),
 });
 
 /**
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { outline } = validationResult.data;
+    const { outline, lessonType } = validationResult.data;
 
     // Log execution mode configuration
     logExecutionMode();
@@ -116,10 +117,12 @@ export async function POST(request: NextRequest) {
 
     console.log(`\n📝 [API] Created lesson ${lesson.id}`);
     console.log(`   Outline: "${outline}"`);
+    console.log(`   Lesson Type: ${lessonType || 'AI Decides'}`);
     console.log(`   Mode: ${getGenerationMode()}`);
 
     // Generate lesson content (auto-detects sync vs async based on environment)
-    const result = await generateLessonContent(lesson.id, outline);
+    // Pass lessonType to the generation service
+    const result = await generateLessonContent(lesson.id, outline, lessonType || undefined);
 
     // Rate limit headers for successful responses
     const rateLimitHeaders = {

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
-import { LessonFormStreaming } from '@/components/lesson-form-streaming';
+import { LessonFormV2 } from '@/components/lesson-form-v2';
 import { LessonTable } from '@/components/lesson-table';
 import { Modal } from '@/components/ui/modal';
 import { Lesson } from '@/types/lesson';
@@ -387,8 +387,8 @@ export function HomeClientWrapper({ initialLessons }: HomeClientWrapperProps) {
       </div>
 
       {/* Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <LessonFormStreaming
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="xl">
+        <LessonFormV2
           onLessonCreated={handleLessonCreated}
           onSubmit={() => setIsModalOpen(false)}
         />

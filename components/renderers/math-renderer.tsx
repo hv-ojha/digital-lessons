@@ -19,6 +19,7 @@ export function MathRenderer({ lesson }: MathRendererProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<number | string | null>(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const currentProblem = lesson.problems[currentIndex];
   const totalProblems = lesson.problems.length;
@@ -34,7 +35,9 @@ export function MathRenderer({ lesson }: MathRendererProps) {
 
     setHasAnswered(true);
 
-    if (selectedAnswer === currentProblem.answer) {
+    // Use loose equality (==) to handle number vs string comparison
+    // Example: 42 == "42" is true, which is what we want
+    if (selectedAnswer == currentProblem.answer) {
       setScore(score + 1);
     }
   };
@@ -46,7 +49,14 @@ export function MathRenderer({ lesson }: MathRendererProps) {
       setHasAnswered(false);
       setShowHint(false);
     } else {
+      // Calculate if we should show confetti
+      // Use loose equality (==) to handle number vs string comparison
+      const finalScore = selectedAnswer == currentProblem.answer ? score + 1 : score;
+      const percentage = Math.round((finalScore / totalProblems) * 100);
+      const isGoodScore = percentage >= 70;
+
       setIsComplete(true);
+      setShowConfetti(isGoodScore);
     }
   };
 
@@ -57,12 +67,12 @@ export function MathRenderer({ lesson }: MathRendererProps) {
     setSelectedAnswer(null);
     setHasAnswered(false);
     setShowHint(false);
+    setShowConfetti(false);
   };
 
   if (isComplete) {
     const percentage = Math.round((score / totalProblems) * 100);
     const isGoodScore = percentage >= 70;
-    const [showConfetti, setShowConfetti] = useState(isGoodScore);
 
     return (
       <>
@@ -223,8 +233,9 @@ export function MathRenderer({ lesson }: MathRendererProps) {
           {/* Answer Options */}
           <div className="grid grid-cols-3 gap-3 md:gap-4">
             {currentProblem.answerOptions.map((option, index) => {
-              const isSelected = selectedAnswer === option;
-              const isCorrect = option === currentProblem.answer;
+              // Use loose equality (==) to handle number vs string comparison
+              const isSelected = selectedAnswer == option;
+              const isCorrect = option == currentProblem.answer;
               const showCorrect = hasAnswered && isCorrect;
               const showIncorrect = hasAnswered && isSelected && !isCorrect;
 
@@ -281,11 +292,11 @@ export function MathRenderer({ lesson }: MathRendererProps) {
         {/* Feedback */}
         {hasAnswered && (
           <div className={`p-6 rounded-xl border-2 flex gap-3 items-start shadow-lg ${
-            selectedAnswer === currentProblem.answer
+            selectedAnswer == currentProblem.answer
               ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
               : 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700'
           }`}>
-            {selectedAnswer === currentProblem.answer ? (
+            {selectedAnswer == currentProblem.answer ? (
               <>
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400 flex-shrink-0 mt-1" />
                 <div>

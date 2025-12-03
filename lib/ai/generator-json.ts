@@ -251,11 +251,12 @@ const generateLessonContent = traceable(
     retryCount = 0,
     previousError?: string,
     previousJson?: string,
-    correlationId?: string
+    correlationId?: string,
+    lessonType?: string
   ): Promise<LessonContent | FlexibleLesson> {
     const startTime = Date.now();
     const temperature = 0.3;
-    const maxTokens = 8192; // Increased from 4096 to prevent JSON truncation
+    const maxTokens = 32768; // Increased to 32K to prevent JSON truncation for comprehensive lessons
     const operation = 'lesson_content_generation';
     const provider = process.env.AI_PROVIDER || 'gemini';
     const model = modelProvider.getModelName();
@@ -281,7 +282,7 @@ const generateLessonContent = traceable(
     let userPrompt: string;
 
     if (retryCount === 0) {
-      userPrompt = getCreativeUserPrompt(outline, title);
+      userPrompt = getCreativeUserPrompt(outline, title, lessonType);
       aiLogger.callStarted({
         provider,
         model,
@@ -290,7 +291,7 @@ const generateLessonContent = traceable(
         prompt: outline,
       });
     } else {
-      userPrompt = getCreativeRetryPrompt(outline, title, previousError!);
+      userPrompt = getCreativeRetryPrompt(outline, title, previousError!, lessonType);
     }
 
     console.log(`🔄 Calling AI model...`);
@@ -327,7 +328,9 @@ const generateLessonContent = traceable(
             title,
             retryCount + 1,
             `Previous response was truncated due to token limit. Please generate a more concise lesson with fewer sections or shorter content that fits within ${maxTokens} tokens.`,
-            ''
+            '',
+            correlationId,
+            lessonType
           );
         }
       }
@@ -371,7 +374,8 @@ const generateLessonContent = traceable(
           retryCount + 1,
           `Schema validation error: ${validation.error}`,
           jsonText,
-          correlationId
+          correlationId,
+          lessonType
         );
       } else {
         throw new Error(`Schema validation failed after ${MAX_RETRIES} retries: ${validation.error}`);
@@ -402,7 +406,7 @@ const generateLessonContent = traceable(
       provider: process.env.AI_PROVIDER || 'gemini',
       model: modelProvider.getModelName(),
       temperature: 0.3,
-      max_tokens: 8192,
+      max_tokens: 32768,
       retry_count: inputs.retryCount || 0,
       max_retries: MAX_RETRIES,
       is_retry: (inputs.retryCount || 0) > 0,
@@ -422,7 +426,7 @@ const generateLessonContent = traceable(
  * Main function to generate a complete lesson using JSON approach
  */
 export const generateLessonJson = traceable(
-  async function generateLessonJsonMain(outline: string, lessonId?: string): Promise<LessonGenerationResult> {
+  async function generateLessonJsonMain(outline: string, lessonType?: string, lessonId?: string): Promise<LessonGenerationResult> {
     const startTime = Date.now();
     const correlationId = generateCorrelationId();
 
@@ -431,6 +435,7 @@ export const generateLessonJson = traceable(
       console.log(`📊 Correlation ID: ${correlationId}`);
       console.log(`📊 Lesson ID: ${lessonId || 'N/A'}`);
       console.log(`📊 Outline: "${outline}"`);
+      console.log(`📊 Requested Type: ${lessonType || 'AI Decides'}`);
       console.log(`🎯 Approach: Structured JSON (80-90% token savings)`);
 
       // Step 1: Generate title
@@ -455,7 +460,7 @@ export const generateLessonJson = traceable(
       // Step 2: Generate structured JSON content
       console.log(`\n📌 Step 2: Generating JSON content...`);
       const contentStartTime = Date.now();
-      const lessonContent = await generateLessonContent(outline, title, 0, undefined, undefined, correlationId);
+      const lessonContent = await generateLessonContent(outline, title, 0, undefined, undefined, correlationId, lessonType);
       const contentDuration = Date.now() - contentStartTime;
 
       // Convert to JSON string for storage (compact format to save tokens)

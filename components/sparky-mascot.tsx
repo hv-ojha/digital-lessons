@@ -221,35 +221,35 @@ export function SparkyMascot({
         <path d="M 55 90 L 53 96 M 57 90 L 57 96" className="stroke-orange-500 dark:stroke-orange-600" strokeWidth="2" strokeLinecap="round" />
       </svg>
 
-      {/* Floating hearts/sparkles for celebrating */}
+      {/* Floating intelligent emojis for celebrating */}
       {animate && (emotion === 'celebrating' || emotion === 'excited') && (
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute"
-              style={{
-                left: `${15 + i * 15}%`,
-                top: `${10 + (i % 2) * 20}%`,
-              }}
-              animate={{
-                y: [-10, -40],
-                opacity: [0, 1, 0],
-                scale: [0, 1, 0.8, 0],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                delay: i * 0.3,
-              }}
-            >
-              {i % 2 === 0 ? (
-                <span className="text-2xl">⭐</span>
-              ) : (
-                <span className="text-2xl">❤️</span>
-              )}
-            </motion.div>
-          ))}
+          {[...Array(6)].map((_, i) => {
+            // Intelligent emojis that make Sparky look smart
+            const intelligentEmojis = ['💡', '🧠', '📚', '✨', '🎓', '💭'];
+            return (
+              <motion.div
+                key={i}
+                className="absolute"
+                style={{
+                  left: `${15 + i * 15}%`,
+                  top: `${10 + (i % 2) * 20}%`,
+                }}
+                animate={{
+                  y: [-10, -40],
+                  opacity: [0, 1, 0],
+                  scale: [0, 1, 0.8, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: i * 0.3,
+                }}
+              >
+                <span className="text-2xl">{intelligentEmojis[i]}</span>
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </motion.div>
